@@ -1,5 +1,8 @@
 export type Question = {
+    _id?: string;
     id: number | string;
+    status?: string;
+    createdAt?: string;
     slug: string; // SEO
     company: string;
     title: string;
@@ -9,6 +12,7 @@ export type Question = {
     views: string;
     duration: string;
     img: string;
+    images?: string[];
     date?: string;
     desc: string;
     constraints?: string;

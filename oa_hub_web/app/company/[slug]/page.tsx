@@ -2,7 +2,7 @@ import React from "react";
 import { type Metadata } from "next";
 import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
-import { QuestionCard } from "@/components/QuestionCard";
+import { QuestionList } from "@/components/QuestionList";
 import { CheckCircle, SearchX } from "lucide-react";
 import { cn, API_URL } from "@/lib/utils";
 import Link from "next/link";
@@ -135,12 +135,8 @@ export default async function CompanyPage({ params }: PageProps) {
                         <h2 className="text-lg font-bold text-white mb-4">Latest Questions</h2>
 
                         {questions.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 animate-fade-in">
-                                {questions.map((q) => (
-                                    <div key={q.id}>
-                                        <QuestionCard question={q} />
-                                    </div>
-                                ))}
+                            <div className="animate-fade-in">
+                                <QuestionList questions={questions} />
                             </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center py-20 bg-dark-800/50 rounded-lg border border-dashed border-dark-700">

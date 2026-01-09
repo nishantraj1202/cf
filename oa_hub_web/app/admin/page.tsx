@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/Sidebar";
 import Link from "next/link";
 import { cn, API_URL } from "@/lib/utils";
 import { ImagePlus, Loader2 } from "lucide-react";
+import ImageCropper from "@/components/ImageCropper";
 
 export default function AdminPage() {
     // --- Post Form State ---
@@ -27,10 +28,53 @@ export default function AdminPage() {
     const [aiError, setAiError] = useState<string | null>(null);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+    const [adminKey, setAdminKey] = useState("");
+    const [deletedImages, setDeletedImages] = useState<string[]>([]);
+
+    // --- Crop State ---
+    const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+    const [cropIndex, setCropIndex] = useState<number | null>(null);
+
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const descImageInputRef = useRef<HTMLInputElement>(null);
     const descRef = useRef<HTMLTextAreaElement>(null);
     const [isImageUploading, setIsImageUploading] = useState(false);
+
+    // --- Auth State ---
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [passwordInput, setPasswordInput] = useState("");
+    const [authError, setAuthError] = useState(false);
+
+    // SHA-256 Hash of "admin"
+    const ADMIN_HASH = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const encoder = new TextEncoder();
+        const data = encoder.encode(passwordInput);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+        if (hashHex === ADMIN_HASH) {
+            setIsAuthenticated(true);
+            setAuthError(false);
+            setAdminKey(passwordInput); // Store raw key for backend calls
+        } else {
+            setAuthError(true);
+        }
+    };
+
+    // Initial load key
+    useEffect(() => {
+        const stored = localStorage.getItem("adminKey");
+        if (stored) setAdminKey(stored);
+    }, []);
+
+    const saveKey = (val: string) => {
+        setAdminKey(val);
+        localStorage.setItem("adminKey", val);
+    };
 
     // --- Review Panel State ---
     const [activeTab, setActiveTab] = useState<"post" | "review">("post");
@@ -39,22 +83,30 @@ export default function AdminPage() {
 
     // --- Fetch Pending Questions ---
     useEffect(() => {
-        if (activeTab === "review") {
-            fetch(`${API_URL}/api/admin/questions`)
-                .then(res => res.json())
-                .then(data => setPendingQuestions(data))
+        if (activeTab === "review" && adminKey) {
+            fetch(`${API_URL}/api/admin/questions`, {
+                headers: { 'x-admin-secret': adminKey }
+            })
+                .then(res => {
+                    if (res.status === 401) throw new Error("Unauthorized");
+                    return res.json();
+                })
+                .then(data => setPendingQuestions(Array.isArray(data) ? data : []))
                 .catch(err => console.error("Failed to fetch pending questions", err));
         }
-    }, [activeTab, refreshTrigger]);
+    }, [activeTab, refreshTrigger, adminKey]);
 
     // --- Actions ---
     const handleApprove = async (id: string) => {
         try {
             const res = await fetch(`${API_URL}/api/admin/questions/${id}/approve`, {
-                method: 'PUT'
+                method: 'PUT',
+                headers: { 'x-admin-secret': adminKey }
             });
             if (res.ok) {
                 setPendingQuestions(prev => prev.filter(q => q.id !== id));
+            } else {
+                alert("Failed to approve. Check admin key.");
             }
         } catch (err) {
             console.error("Approve failed", err);
@@ -65,10 +117,13 @@ export default function AdminPage() {
         if (!confirm("Are you sure you want to delete this question?")) return;
         try {
             const res = await fetch(`${API_URL}/api/admin/questions/${id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: { 'x-admin-secret': adminKey }
             });
             if (res.ok) {
                 setPendingQuestions(prev => prev.filter(q => q.id !== id));
+            } else {
+                alert("Failed to reject. Check admin key.");
             }
         } catch (err) {
             console.error("Reject failed", err);
@@ -100,7 +155,10 @@ export default function AdminPage() {
             // Send to AI
             const res = await fetch(`${API_URL}/api/admin/extract/image`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-secret': adminKey
+                },
                 body: JSON.stringify({ images: base64Images })
             });
 
@@ -210,6 +268,7 @@ export default function AdminPage() {
             images: q.images || [], // Load existing images
             testCases: JSON.stringify(q.testCases || [], null, 2)
         });
+        setImagePreviews(q.images || []); // SHOW PREVIEWS
         setEditingId(q.id);
         setActiveTab("post");
     };
@@ -232,7 +291,8 @@ export default function AdminPage() {
 
             const payload = {
                 ...formData,
-                testCases: parsedTestCases
+                testCases: parsedTestCases,
+                status: 'approved' // AUTO-APPROVE Admin Submissions
             };
 
             let url = `${API_URL}/api/questions`;
@@ -245,7 +305,10 @@ export default function AdminPage() {
 
             const res = await fetch(url, {
                 method: method,
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-secret': adminKey
+                },
                 body: JSON.stringify(payload)
             });
 
@@ -269,6 +332,49 @@ export default function AdminPage() {
     };
 
 
+    // --- Render Login Screen if not authenticated ---
+    if (!isAuthenticated) {
+        return (
+            <div className="flex flex-col h-screen overflow-hidden bg-dark-950 text-gray-200">
+                <Navbar />
+                <div className="flex-1 flex items-center justify-center p-4">
+                    <div className="bg-dark-900 border border-dark-800 p-8 rounded-lg max-w-md w-full shadow-2xl">
+                        <div className="text-center mb-6">
+                            <div className="w-16 h-16 bg-dark-800 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                                🔒
+                            </div>
+                            <h1 className="text-2xl font-bold text-white">Admin Access</h1>
+                            <p className="text-gray-400 text-sm mt-2">Enter the secret key to continue</p>
+                        </div>
+                        <form onSubmit={handleLogin} className="space-y-4">
+                            <div>
+                                <input
+                                    type="password"
+                                    value={passwordInput}
+                                    onChange={(e) => {
+                                        setPasswordInput(e.target.value);
+                                        setAuthError(false); // Clear error on input change
+                                    }}
+                                    placeholder="Secret Key"
+                                    className="w-full bg-black border border-dark-700 rounded px-4 py-3 text-white focus:border-brand focus:outline-none transition-colors"
+                                    autoFocus
+                                />
+                            </div>
+                            {authError && (
+                                <p className="text-red-500 text-sm text-center">Invalid secret key</p>
+                            )}
+                            <button
+                                type="submit"
+                                className="w-full bg-brand hover:bg-yellow-500 text-black font-bold py-3 rounded transition-colors"
+                            >
+                                Unlock Panel
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-dark-950 text-gray-200">
@@ -279,6 +385,10 @@ export default function AdminPage() {
                     <div className="max-w-4xl mx-auto">
                         <div className="flex items-center justify-between mb-6">
                             <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
+
+                            <div className="flex items-center gap-2">
+                                {/* Key is managed via Lock Screen now */}
+                            </div>
 
                             {/* Tab Switcher */}
                             <div className="flex bg-dark-800 rounded-lg p-1 gap-1">
@@ -330,11 +440,100 @@ export default function AdminPage() {
 
                                 {/* Image Previews */}
                                 {imagePreviews.length > 0 && (
-                                    <div className="flex gap-2 overflow-x-auto mb-6 p-2 bg-dark-900 rounded border border-dark-700">
-                                        {imagePreviews.map((src, i) => (
-                                            <img key={i} src={src} alt={`Preview ${i}`} className="h-24 w-auto rounded border border-dark-600" />
-                                        ))}
+                                    <div className="mb-6">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-gray-400 text-sm">Attached Images ({imagePreviews.length})</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setImagePreviews([]);
+                                                    setDeletedImages(prev => [...prev, ...imagePreviews]);
+                                                }}
+                                                className="text-red-400 text-xs hover:text-red-300 underline"
+                                            >
+                                                Remove All Images
+                                            </button>
+                                        </div>
+                                        <div className="flex gap-2 overflow-x-auto p-2 bg-dark-900 rounded border border-dark-700">
+                                            {imagePreviews.map((src, i) => (
+                                                <div key={i} className="relative group flex-shrink-0">
+                                                    <img src={src} alt={`Preview ${i}`} className="h-32 w-auto rounded border border-dark-600" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const toDelete = imagePreviews[i];
+                                                            setDeletedImages(prev => [...prev, toDelete]);
+                                                            const newImages = [...imagePreviews];
+                                                            newImages.splice(i, 1);
+                                                            setImagePreviews(newImages);
+                                                        }}
+                                                        className="absolute top-1 right-1 bg-red-600 hover:bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-10"
+                                                        title="Remove this image"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            const md = `![Image](${src})`;
+                                                            navigator.clipboard.writeText(md);
+                                                            const btn = e.currentTarget;
+                                                            const originalText = btn.innerText;
+                                                            btn.innerText = "✓ Copied";
+                                                            setTimeout(() => btn.innerText = originalText, 1500);
+                                                        }}
+                                                        className="absolute bottom-1 right-1 bg-black/70 hover:bg-black/90 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+                                                        title="Copy Markdown for Description"
+                                                    >
+                                                        Copy MD
+                                                    </button>
+
+                                                    <a
+                                                        href={src}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="absolute bottom-1 left-1 bg-black/70 hover:bg-black/90 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+                                                        title="Open Full Image"
+                                                    >
+                                                        Open
+                                                    </a>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setImageToCrop(src);
+                                                            setCropIndex(i);
+                                                        }}
+                                                        className="absolute top-1 left-1 bg-blue-600 hover:bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-10"
+                                                        title="Crop Image"
+                                                    >
+                                                        ✂
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
+                                )}
+
+                                {/* --- CROPPER MODAL --- */}
+                                {imageToCrop && (
+                                    <ImageCropper
+                                        imageSrc={imageToCrop}
+                                        onCancel={() => {
+                                            setImageToCrop(null);
+                                            setCropIndex(null);
+                                        }}
+                                        onSave={(newBase64) => {
+                                            if (cropIndex !== null) {
+                                                const newImages = [...imagePreviews];
+                                                newImages[cropIndex] = newBase64;
+                                                setImagePreviews(newImages);
+                                            }
+                                            setImageToCrop(null);
+                                            setCropIndex(null);
+                                        }}
+                                    />
                                 )}
 
                                 {/* AI Error */}

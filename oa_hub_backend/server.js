@@ -39,6 +39,16 @@ cloudinary.config({
 });
 
 // --- ROUTES ---
+// Admin Middleware
+const checkAdmin = (req, res, next) => {
+    const secret = req.headers['x-admin-secret'];
+    const validSecret = process.env.ADMIN_SECRET || "admin";
+    if (secret !== validSecret) {
+        return res.status(401).json({ error: "Unauthorized: Invalid Admin Key" });
+    }
+    next();
+};
+
 app.get('/health', async (req, res) => {
     res.json({ message: "Server is running" })
 })
@@ -66,6 +76,7 @@ app.post('/api/upload/image', async (req, res) => {
 });
 
 // AI Extraction Route
+// 0. Extract Question from Image (Supports Multi-page)
 // 0. Extract Question from Image (Supports Multi-page)
 app.post('/api/admin/extract/image', async (req, res) => {
     try {
@@ -123,9 +134,19 @@ WRONG (DO NOT DO THIS):
 - Concatenating: [10,9,2,5] as [109,2,5] or [10925] - THIS IS WRONG
 - Each number separated by comma is an INDIVIDUAL element`;
 
-        // Limit to 5 images to prevent browser timeout (5 * 3s = 15s + processing time)
-        const limitedImages = imageList.slice(0, 5);
-        console.log(`Debug: Processing ${limitedImages.length} images sequentially...`);
+        // Limit to 4 images to prevent token/browser timeout
+        // (Llama 3.2 Vision can handle multiple images, but we must be mindful of total context)
+        const limitedImages = imageList.slice(0, 4);
+        console.log(`Debug: Processing ${limitedImages.length} images in a SINGLE BATCH...`);
+
+        // Construct Content Array (Text + Images)
+        const contentArray = [
+            { type: "text", text: prompt + `\n\nIMPORTANT: You are provided with ${limitedImages.length} images. They may be SCREENSHOTS of the SAME problem. They might be OUT OF ORDER (e.g. Image 2 might be the start, and Image 1 the end). INTELLIGENTLY STITCH the content together to form a single coherent problem description. If text is cut off in one image, look for the continuation in another.` }
+        ];
+
+        limitedImages.forEach(img => {
+            contentArray.push({ type: "image_url", image_url: { url: img } });
+        });
 
         let mergedJson = {
             title: "",
@@ -138,67 +159,47 @@ WRONG (DO NOT DO THIS):
             snippets: {}
         };
 
+        // Single Batch Request with Retry
+        let success = false;
+        let attempts = 0;
         let errorLog = [];
 
-        // Sequential Processing with Retry
-        for (const [idx, img] of limitedImages.entries()) {
-            let success = false;
-            let attempts = 0;
+        while (!success && attempts < 2) { // 2 Retries
+            try {
+                console.log(`Debug: Sending Batch Request (Attempt ${attempts + 1})...`);
+                const completion = await groq.chat.completions.create({
+                    model: "meta-llama/llama-4-scout-17b-16e-instruct", // UPDATED per user request
+                    messages: [
+                        {
+                            role: "user",
+                            content: contentArray
+                        }
+                    ],
+                    temperature: 0.1,
+                    max_tokens: 3000, // Increased for multiple images
+                    top_p: 1,
+                    stream: false,
+                    response_format: { type: "json_object" }
+                });
 
-            while (!success && attempts < 3) { // 3 Retries
-                try {
-                    console.log(`Debug: Scanning Image ${idx + 1}/${limitedImages.length} (Attempt ${attempts + 1})...`);
-                    const completion = await groq.chat.completions.create({
-                        model: targetModel,
-                        messages: [
-                            {
-                                role: "user",
-                                content: [
-                                    { type: "text", text: prompt },
-                                    { type: "image_url", image_url: { url: img } }
-                                ]
-                            }
-                        ],
-                        temperature: 0.1,
-                        max_tokens: 2048,
-                        top_p: 1,
-                        stream: false,
-                        response_format: { type: "json_object" }
-                    });
+                let result = completion.choices[0].message.content.trim();
+                const firstBrace = result.indexOf('{');
+                const lastBrace = result.lastIndexOf('}');
 
-                    let result = completion.choices[0].message.content.trim();
-                    const firstBrace = result.indexOf('{');
-                    const lastBrace = result.lastIndexOf('}');
-                    if (firstBrace !== -1 && lastBrace !== -1) {
-                        result = result.substring(firstBrace, lastBrace + 1);
-                        const json = JSON.parse(result);
-
-                        // MERGE LOGIC
-                        if (!mergedJson.title && json.title) mergedJson.title = json.title;
-                        if (json.desc) mergedJson.desc += "\n\n" + (Array.isArray(json.desc) ? json.desc.join('\n') : json.desc);
-                        if (json.constraints) mergedJson.constraints += "\n" + (Array.isArray(json.constraints) ? json.constraints.join('\n') : json.constraints);
-                        if (!mergedJson.company && json.company) mergedJson.company = json.company;
-                        if (!mergedJson.topic && json.topic) mergedJson.topic = Array.isArray(json.topic) ? json.topic[0] : json.topic;
-                        if (!mergedJson.difficulty && json.difficulty) mergedJson.difficulty = json.difficulty;
-                        if (json.testCases && Array.isArray(json.testCases)) mergedJson.testCases = [...mergedJson.testCases, ...json.testCases];
-                        if (json.snippets) mergedJson.snippets = { ...mergedJson.snippets, ...json.snippets };
-                    }
-                    success = true; // Succeeded
-                } catch (innerErr) {
-                    console.error(`Debug: Failed to scan image ${idx + 1} (Attempt ${attempts + 1}):`, innerErr.message);
-                    attempts++;
-                    if (attempts < 3) {
-                        // Exponential backoff: 2s, 4s, 8s
-                        const wait = Math.pow(2, attempts) * 1000;
-                        console.log(`Waiting ${wait}ms before retry...`);
-                        await new Promise(r => setTimeout(r, wait));
-                    } else {
-                        errorLog.push(`Img ${idx + 1} Failed: ${innerErr.message}`);
-                    }
+                if (firstBrace !== -1 && lastBrace !== -1) {
+                    result = result.substring(firstBrace, lastBrace + 1);
+                    mergedJson = JSON.parse(result); // Direct assignment, context is continuous
+                }
+                success = true;
+            } catch (innerErr) {
+                console.error(`Debug: Batch Extraction Failed (Attempt ${attempts + 1}):`, innerErr.message);
+                attempts++;
+                if (attempts < 2) {
+                    await new Promise(r => setTimeout(r, 2000));
+                } else {
+                    errorLog.push(`Batch Failed: ${innerErr.message}`);
                 }
             }
-            // Standard delay between images if success (to be safe)
-            if (success) await new Promise(r => setTimeout(r, 2000));
         }
 
         // Post-Processing & Formatting
@@ -280,7 +281,10 @@ app.get('/api/questions', async (req, res) => {
         let query = { status: 'approved' };
 
         if (company) {
-            query.company = { $regex: new RegExp(`^${company}$`, 'i') };
+            // Support searching "Google" finding results with "Google, Amazon"
+            // We use simple regex for existence. \b ensures word boundary so "Go" doesn't match "Google"
+            // Escaping for safety is a good idea but kept simple here for this context
+            query.company = { $regex: new RegExp(company, 'i') };
         }
         if (topic) {
             // Topic is usually consistent case (Arrays, Strings), but regex is safer
@@ -306,14 +310,32 @@ app.get('/api/questions', async (req, res) => {
 app.get('/api/companies/:slug', async (req, res) => {
     try {
         const slug = req.params.slug.toLowerCase();
+        console.log(`Debug: Fetching company profile for slug: '${slug}'`);
+
         const company = await Company.findOne({ slug });
 
         if (!company) {
+            console.log(`Debug: Company not found for slug: '${slug}'`);
             return res.status(404).json({ error: "Company not found" });
         }
 
-        // Fetch questions for this company
-        const questions = await Question.find({ company: company.name, status: 'approved' }).sort({ date: -1 });
+        console.log(`Debug: Found Company: '${company.name}' (ID: ${company._id})`);
+
+        // Escape regex special characters to prevent errors
+        const escapedName = company.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(escapedName, 'i');
+        console.log(`Debug: Searching questions with regex: ${regex}`);
+
+        // Fetch questions for this company (Case Insensitive Regex)
+        // We match strict word boundaries if possible to avoid partial matches (e.g. "Go" matching "Google")
+        // But simply "Google" should match "Google, Amazon"
+        const questions = await Question.find({
+            company: { $regex: regex }, // Keep it simple for now, refine if needed
+            status: 'approved'
+        }).sort({ date: -1 });
+
+        console.log(`Debug: Found ${questions.length} questions for ${company.name}`);
+
         const formattedQuestions = questions.map(q => ({ ...q.toObject(), id: q._id }));
 
         res.json({
@@ -321,7 +343,7 @@ app.get('/api/companies/:slug', async (req, res) => {
             questions: formattedQuestions
         });
     } catch (err) {
-        console.error(err);
+        console.error("Error in GET /api/companies/:slug:", err);
         res.status(500).json({ error: 'Server Error' });
     }
 });
@@ -364,7 +386,7 @@ app.get('/api/questions/:id', async (req, res) => {
     }
 });
 
-// 4a. Get Single Question (Admin - Any Status)
+// 4a. Get Single Question (Admin/Preview - Any Status)
 app.get('/api/admin/questions/:id', async (req, res) => {
     try {
         const id = req.params.id; // Admin usually uses ID
@@ -385,10 +407,18 @@ app.get('/api/admin/questions/:id', async (req, res) => {
     }
 });
 
-// 5. Post Question (Admin Perspective: Add Content)
+// 5. Post Question (Public - Moderated / Admin - Direct)
 app.post('/api/questions', async (req, res) => {
     try {
         let { title, company, topic, difficulty, desc, constraints, snippets, date, img, slug, testCases, images, status } = req.body;
+
+        // Security: Only allow 'approved' status if Admin Key is present
+        const adminSecret = process.env.ADMIN_SECRET || "admin";
+        const isAdmin = req.headers['x-admin-secret'] === adminSecret;
+
+        if (!isAdmin) {
+            status = 'pending'; // Force pending for public submissions
+        }
 
         // Cloudinary Upload for Base64 Images
         let processedImages = [];
@@ -416,14 +446,14 @@ app.post('/api/questions', async (req, res) => {
         // Check strict empty strings because frontend might send ""
         if (!title || (typeof title === 'string' && title.trim() === "")) {
             title = `Snapshot Upload ${new Date().toISOString().substring(0, 19).replace('T', ' ')}`;
-            status = 'pending';
+            // status is already handled above or passed in
         }
         if (!desc || (typeof desc === 'string' && desc.trim() === "")) desc = "See attached screenshots for problem description.";
         if (!company || (typeof company === 'string' && company.trim() === "")) company = "Unknown";
         if (!topic || (typeof topic === 'string' && topic.trim() === "")) topic = "Arrays";
         if (!difficulty || (typeof difficulty === 'string' && difficulty.trim() === "")) difficulty = "Medium";
 
-        console.log("Debug: Final Data for Create:", { title, company, topic, difficulty, desc, status });
+        console.log("Debug: Final Data for Create:", { title, company, topic, difficulty, desc, status, isAdmin });
 
         // Auto-generate slug if not provided
         let questionSlug = slug;
@@ -455,6 +485,48 @@ app.post('/api/questions', async (req, res) => {
             likes: '0%'
         });
 
+        // Sync with Company Collection AND Normalize if created with approved status
+        if (newQuestion.status === 'approved' && newQuestion.company && newQuestion.company.trim() !== "" && newQuestion.company.toLowerCase() !== "unknown") {
+            const companyNames = newQuestion.company.split(',').map(c => c.trim()).filter(c => c !== "");
+            let normalizedCompanyNames = [];
+
+            for (const companyName of companyNames) {
+                const companySlug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+
+                // Find or create company (case-insensitive search)
+                let company = await Company.findOne({
+                    slug: companySlug
+                });
+
+                if (!company) {
+                    try {
+                        company = await Company.create({
+                            name: companyName, // Use original casing if new
+                            slug: companySlug,
+                            logo: 'bg-gray-700',
+                            subscribers: '0',
+                            description: `Questions from ${companyName}`
+                        });
+                        console.log(`Created new company: ${companyName}`);
+                        normalizedCompanyNames.push(companyName);
+                    } catch (createErr) {
+                        // On duplicate slug race condition, try to fetch again
+                        company = await Company.findOne({ slug: companySlug });
+                        if (company) normalizedCompanyNames.push(company.name);
+                        else normalizedCompanyNames.push(companyName); // Fallback
+                    }
+                } else {
+                    console.log(`Company ${companyName} matched to existing ${company.name}`);
+                    normalizedCompanyNames.push(company.name); // Use existing canonical name
+                }
+            }
+            // Update question with normalized names
+            if (normalizedCompanyNames.length > 0) {
+                newQuestion.company = normalizedCompanyNames.join(', ');
+                await newQuestion.save();
+            }
+        }
+
         res.status(201).json(newQuestion);
     } catch (err) {
         console.error("Submission Error:", err);
@@ -463,9 +535,47 @@ app.post('/api/questions', async (req, res) => {
 });
 
 // 5a. Update Question (Admin Perspective: Edit Content)
-app.put('/api/questions/:id', async (req, res) => {
+app.put('/api/questions/:id', checkAdmin, async (req, res) => {
     try {
-        const { title, company, topic, difficulty, desc, constraints, snippets, date, img, slug, testCases } = req.body;
+        const { title, company, topic, difficulty, desc, constraints, snippets, date, img, slug, testCases, images, deletedImages } = req.body;
+
+        // Handle Image Deletions (Frontend sends array of URLs to delete)
+        if (deletedImages && Array.isArray(deletedImages) && deletedImages.length > 0) {
+            console.log(`Debug: Processing ${deletedImages.length} image deletions...`);
+            for (const imageUrl of deletedImages) {
+                // Extract public_id from URL
+                // Example: https://res.cloudinary.com/demo/image/upload/v12345/oa_hub_uploads/sample.jpg
+                // Public ID: oa_hub_uploads/sample
+                try {
+                    const parts = imageUrl.split('/');
+                    const filename = parts.pop();
+                    const folder = parts.pop();
+                    if (folder === 'oa_hub_uploads') { // Security check
+                        const publicId = `${folder}/${filename.split('.')[0]}`;
+                        await cloudinary.uploader.destroy(publicId);
+                        console.log(`Deleted from Cloudinary: ${publicId}`);
+                    }
+                } catch (delErr) {
+                    console.error("Image deletion error:", delErr);
+                }
+            }
+        }
+
+        // Handle Image Uploads (New base64)
+        let processedImages = images || [];
+        // If images is mixed base64/url, we need to upload base64 ones
+        // But for simplicity, we assume frontend manages the list order.
+        // We need to re-scan the images array for any new base64
+        if (processedImages && Array.isArray(processedImages)) {
+            for (let i = 0; i < processedImages.length; i++) {
+                if (processedImages[i].startsWith('data:image')) {
+                    const uploadRes = await cloudinary.uploader.upload(processedImages[i], {
+                        folder: "oa_hub_uploads",
+                    });
+                    processedImages[i] = uploadRes.secure_url;
+                }
+            }
+        }
 
         const updatedQuestion = await Question.findByIdAndUpdate(
             req.params.id,
@@ -479,7 +589,8 @@ app.put('/api/questions/:id', async (req, res) => {
                 snippets: snippets || {},
                 testCases: testCases || [],
                 img: img || 'bg-gray-800',
-                slug: slug // Usually slug shouldn't change, but allowing fixes if needed
+                slug: slug,
+                images: processedImages
             },
             { new: true }
         );
@@ -496,7 +607,7 @@ app.put('/api/questions/:id', async (req, res) => {
 });
 
 // 6. Admin: Get Pending Questions
-app.get('/api/admin/questions', async (req, res) => {
+app.get('/api/admin/questions', checkAdmin, async (req, res) => {
     try {
         const questions = await Question.find({ status: 'pending' }).sort({ date: -1 });
         const formatted = questions.map(q => ({
@@ -511,16 +622,55 @@ app.get('/api/admin/questions', async (req, res) => {
 });
 
 // 7. Admin: Approve Question
-app.put('/api/admin/questions/:id/approve', async (req, res) => {
+app.put('/api/admin/questions/:id/approve', checkAdmin, async (req, res) => {
     try {
-        const question = await Question.findByIdAndUpdate(
-            req.params.id,
-            { status: 'approved' },
-            { new: true }
-        );
-
+        // First find the question to get its data
+        let question = await Question.findById(req.params.id);
         if (!question) {
             return res.status(404).json({ error: "Question not found" });
+        }
+
+        // Sync Comany & Normalize Name
+        if (question.company && question.company.trim() !== "") {
+            const companyNames = question.company.split(',').map(c => c.trim()).filter(c => c !== "");
+            let normalizedCompanyNames = [];
+
+            for (const companyName of companyNames) {
+                const slug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+                // Find Compnay
+                let company = await Company.findOne({ slug: slug });
+
+                if (!company) {
+                    // Create New
+                    try {
+                        company = await Company.create({
+                            name: companyName,
+                            slug: slug,
+                            logo: "bg-gray-700",
+                            description: `${companyName} interview questions.`
+                        });
+                        normalizedCompanyNames.push(companyName);
+                    } catch (e) {
+                        // Race condition check
+                        company = await Company.findOne({ slug: slug });
+                        if (company) normalizedCompanyNames.push(company.name);
+                        else normalizedCompanyNames.push(companyName);
+                    }
+                } else {
+                    // Exists -> Use Canonical Name
+                    normalizedCompanyNames.push(company.name);
+                }
+            }
+
+            // Update Question with Normalized Names and Approved Status
+            question.company = normalizedCompanyNames.join(', ');
+            question.status = 'approved';
+            await question.save();
+        } else {
+            // Just approve if no company
+            question.status = 'approved';
+            await question.save();
         }
 
         res.json(question);
@@ -531,7 +681,7 @@ app.put('/api/admin/questions/:id/approve', async (req, res) => {
 });
 
 // 8. Admin: Reject/Delete Question
-app.delete('/api/admin/questions/:id', async (req, res) => {
+app.delete('/api/admin/questions/:id', checkAdmin, async (req, res) => {
     try {
         const question = await Question.findByIdAndDelete(req.params.id);
 

@@ -54,8 +54,11 @@ export function QuestionCard({ question }: QuestionCardProps) {
                         >
                             {question.company}
                         </Link>
-                        <p className="text-[10px] text-gray-500 mt-1">
-                            Online Assessment
+                        <p className="text-[10px] text-gray-500 mt-1 flex justify-between items-center">
+                            <span>Online Assessment</span>
+                            <span className="text-gray-600">
+                                {question.date ? new Date(question.date).toLocaleDateString() : 'Recent'}
+                            </span>
                         </p>
                     </div>
                 </div>
