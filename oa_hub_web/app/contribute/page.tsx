@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { CodePlayer } from "@/components/CodePlayer";
 import { Upload, FileText, ArrowRight, Loader2, ArrowLeft, CheckCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, API_URL } from "@/lib/utils";
 
 export default function ContributePage() {
     const [step, setStep] = useState<"select" | "input" | "preview" | "success">("select");
@@ -55,7 +55,7 @@ export default function ContributePage() {
     const directSubmit = async (data: any) => {
         setLoading(true);
         try {
-            const res = await fetch('http://127.0.0.1:5000/api/questions', {
+            const res = await fetch(`${API_URL}/api/questions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -86,7 +86,7 @@ export default function ContributePage() {
 
         try {
             // Call AI Extraction API first
-            const extractRes = await fetch('http://localhost:5000/api/admin/extract/image', {
+            const extractRes = await fetch(`${API_URL}/api/admin/extract/image`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ images: imgPreviews })

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { cn, API_URL } from "@/lib/utils";
 import { ImagePlus, Loader2 } from "lucide-react";
 
 export default function AdminPage() {
@@ -40,7 +40,7 @@ export default function AdminPage() {
     // --- Fetch Pending Questions ---
     useEffect(() => {
         if (activeTab === "review") {
-            fetch('http://localhost:5000/api/admin/questions')
+            fetch(`${API_URL}/api/admin/questions`)
                 .then(res => res.json())
                 .then(data => setPendingQuestions(data))
                 .catch(err => console.error("Failed to fetch pending questions", err));
@@ -50,7 +50,7 @@ export default function AdminPage() {
     // --- Actions ---
     const handleApprove = async (id: string) => {
         try {
-            const res = await fetch(`http://localhost:5000/api/admin/questions/${id}/approve`, {
+            const res = await fetch(`${API_URL}/api/admin/questions/${id}/approve`, {
                 method: 'PUT'
             });
             if (res.ok) {
@@ -64,7 +64,7 @@ export default function AdminPage() {
     const handleReject = async (id: string) => {
         if (!confirm("Are you sure you want to delete this question?")) return;
         try {
-            const res = await fetch(`http://localhost:5000/api/admin/questions/${id}`, {
+            const res = await fetch(`${API_URL}/api/admin/questions/${id}`, {
                 method: 'DELETE'
             });
             if (res.ok) {
@@ -98,7 +98,7 @@ export default function AdminPage() {
             setImagePreviews(base64Images);
 
             // Send to AI
-            const res = await fetch('http://localhost:5000/api/admin/extract/image', {
+            const res = await fetch(`${API_URL}/api/admin/extract/image`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ images: base64Images })
@@ -153,7 +153,7 @@ export default function AdminPage() {
             });
 
             // Upload to Cloudinary
-            const res = await fetch('http://localhost:5000/api/upload/image', {
+            const res = await fetch(`${API_URL}/api/upload/image`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ image: base64 })
@@ -235,11 +235,11 @@ export default function AdminPage() {
                 testCases: parsedTestCases
             };
 
-            let url = 'http://localhost:5000/api/questions';
+            let url = `${API_URL}/api/questions`;
             let method = 'POST';
 
             if (editingId) {
-                url = `http://localhost:5000/api/questions/${editingId}`;
+                url = `${API_URL}/api/questions/${editingId}`;
                 method = 'PUT';
             }
 

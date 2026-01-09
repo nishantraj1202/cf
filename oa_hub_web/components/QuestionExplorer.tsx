@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { QuestionCard } from "@/components/QuestionCard";
 import { type Question } from "@/types";
 import { SearchX, Filter } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, API_URL } from "@/lib/utils";
 
 export function QuestionExplorer() {
     const [questions, setQuestions] = useState<Question[]>([]);
@@ -19,7 +19,7 @@ export function QuestionExplorer() {
         // Fetch from Backend
         const fetchQuestions = async () => {
             try {
-                const res = await fetch('http://127.0.0.1:5000/api/questions');
+                const res = await fetch(`${API_URL}/api/questions`);
                 const data = await res.json();
                 if (Array.isArray(data)) {
                     setQuestions(data);
