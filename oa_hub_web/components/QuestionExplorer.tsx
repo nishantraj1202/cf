@@ -86,7 +86,13 @@ export function QuestionExplorer() {
     if (loading) {
         return (
             <div className="max-w-7xl mx-auto">
-                {/* Header Skeleton (Optional, but keeps layout stable) */}
+                {/* Loading Indicator */}
+                <div className="flex items-center justify-center gap-3 mb-8 py-4">
+                    <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+                    <span className="text-gray-400 text-sm font-medium">Loading Problem Set...</span>
+                </div>
+
+                {/* Header Skeleton */}
                 <div className="mb-6 space-y-4">
                     <div className="flex justify-between items-center mb-8">
                         <div className="h-8 w-48 bg-dark-800/50 rounded animate-pulse" />

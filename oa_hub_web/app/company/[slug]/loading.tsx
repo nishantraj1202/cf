@@ -11,6 +11,12 @@ export default function Loading() {
             <div className="flex-1 flex overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto custom-scroll">
+                    {/* Loading Indicator */}
+                    <div className="flex items-center justify-center gap-3 py-6 bg-dark-900 border-b border-dark-800">
+                        <div className="w-5 h-5 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+                        <span className="text-gray-400 text-sm font-medium">Loading Company...</span>
+                    </div>
+
                     {/* Header Banner Skeleton */}
                     <div className="bg-dark-900 border-b border-dark-800">
                         <div className="h-32 sm:h-48 bg-dark-800 w-full animate-pulse" />

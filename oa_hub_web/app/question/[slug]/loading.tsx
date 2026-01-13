@@ -9,6 +9,12 @@ export default function Loading() {
             <main className="flex-1 flex overflow-hidden">
                 {/* Left Column: Code Editor Skeleton */}
                 <div className="flex-1 border-r border-dark-800 bg-dark-900 overflow-hidden flex flex-col p-4">
+                    {/* Loading Indicator */}
+                    <div className="flex items-center justify-center gap-3 py-4 mb-4">
+                        <div className="w-5 h-5 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+                        <span className="text-gray-400 text-sm font-medium">Loading Question...</span>
+                    </div>
+
                     {/* Toolbar Skeleton */}
                     <div className="flex items-center justify-between mb-4 border-b border-dark-800 pb-4">
                         <div className="flex gap-4">
