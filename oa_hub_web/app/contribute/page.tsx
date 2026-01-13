@@ -222,7 +222,7 @@ export default function ContributePage() {
                                             type="text"
                                             value={company}
                                             onChange={(e) => setCompany(e.target.value)}
-                                            placeholder="e.g. Brazzers, Google, NaughtyAmerica"
+                                            placeholder="e.g. Amazon, Google, Oracle"
                                             className="w-full bg-dark-950 border border-dark-700 rounded-lg p-3 text-white focus:border-brand focus:outline-none transition-colors"
                                         />
                                     </div>
