@@ -45,23 +45,28 @@ export default function AdminPage() {
     const [passwordInput, setPasswordInput] = useState("");
     const [authError, setAuthError] = useState(false);
 
-    // SHA-256 Hash of "admin"
-    const ADMIN_HASH = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
-
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        const encoder = new TextEncoder();
-        const data = encoder.encode(passwordInput);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        setLoading(true);
+        try {
+            // Verify with Backend
+            const res = await fetch(`${API_URL}/api/admin/questions`, {
+                headers: { 'x-admin-secret': passwordInput }
+            });
 
-        if (hashHex === ADMIN_HASH) {
-            setIsAuthenticated(true);
-            setAuthError(false);
-            setAdminKey(passwordInput); // Store raw key for backend calls
-        } else {
+            if (res.ok || res.status === 200) {
+                setIsAuthenticated(true);
+                setAuthError(false);
+                setAdminKey(passwordInput);
+                saveKey(passwordInput);
+            } else {
+                setAuthError(true);
+            }
+        } catch (err) {
+            console.error("Auth verification failed", err);
             setAuthError(true);
+        } finally {
+            setLoading(false);
         }
     };
 

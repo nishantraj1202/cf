@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { QuestionCard } from "@/components/QuestionCard";
+import { QuestionCardSkeleton } from "@/components/skeletons/QuestionCardSkeleton";
 import { type Question } from "@/types";
 import { SearchX, Filter, ListFilter } from "lucide-react";
 import { cn, API_URL } from "@/lib/utils";
@@ -83,7 +84,23 @@ export function QuestionExplorer() {
     const topics = ["All", ...Array.from(new Set((questions || []).map(q => q.topic))).sort()];
 
     if (loading) {
-        return <div className="p-8 text-center text-gray-500 animate-pulse">Loading Problem Set...</div>;
+        return (
+            <div className="max-w-7xl mx-auto">
+                {/* Header Skeleton (Optional, but keeps layout stable) */}
+                <div className="mb-6 space-y-4">
+                    <div className="flex justify-between items-center mb-8">
+                        <div className="h-8 w-48 bg-dark-800/50 rounded animate-pulse" />
+                        <div className="h-10 w-64 bg-dark-800/50 rounded animate-pulse" />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 animate-fade-in">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                        <QuestionCardSkeleton key={i} />
+                    ))}
+                </div>
+            </div>
+        );
     }
 
     return (

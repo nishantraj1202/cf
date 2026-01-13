@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
 const Question = require('./models/Question');
 const Company = require('./models/Company');
@@ -19,6 +20,20 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json({ limit: '200mb' }));
 app.use(express.urlencoded({ extended: true, limit: '200mb' }));
+
+// Rate Limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: "Too many requests from this IP, please try again later."
+});
+app.use(limiter);
+
+const adminLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 30, // Stricter limit for admin routes
+    message: "Too many admin attempts, please try again later."
+});
 
 // Initialize Groq
 const Groq = require('groq-sdk');
@@ -42,12 +57,21 @@ cloudinary.config({
 // Admin Middleware
 const checkAdmin = (req, res, next) => {
     const secret = req.headers['x-admin-secret'];
-    const validSecret = process.env.ADMIN_SECRET || "admin";
+    const validSecret = process.env.ADMIN_SECRET;
+
+    if (!validSecret) {
+        console.error("CRITICAL: ADMIN_SECRET is not set in environment variables.");
+        return res.status(500).json({ error: "Server Configuration Error" });
+    }
+
     if (secret !== validSecret) {
         return res.status(401).json({ error: "Unauthorized: Invalid Admin Key" });
     }
     next();
 };
+
+// Apply admin limiter to all admin routes
+app.use('/api/admin', adminLimiter);
 
 app.get('/health', async (req, res) => {
     res.json({ message: "Server is running" })
@@ -274,6 +298,11 @@ WRONG (DO NOT DO THIS):
     }
 });
 
+// Helper to escape regex characters
+function escapeRegex(text) {
+    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+}
+
 // 1. Get All Questions (User Perspective: Browse Feed)
 app.get('/api/questions', async (req, res) => {
     try {
@@ -281,17 +310,13 @@ app.get('/api/questions', async (req, res) => {
         let query = { status: 'approved' };
 
         if (company) {
-            // Support searching "Google" finding results with "Google, Amazon"
-            // We use simple regex for existence. \b ensures word boundary so "Go" doesn't match "Google"
-            // Escaping for safety is a good idea but kept simple here for this context
-            query.company = { $regex: new RegExp(company, 'i') };
+            query.company = { $regex: new RegExp(escapeRegex(company), 'i') };
         }
         if (topic) {
-            // Topic is usually consistent case (Arrays, Strings), but regex is safer
-            query.topic = { $regex: new RegExp(`^${topic}$`, 'i') };
+            query.topic = { $regex: new RegExp(`^${escapeRegex(topic)}$`, 'i') };
         }
         if (difficulty) {
-            query.difficulty = { $regex: new RegExp(`^${difficulty}$`, 'i') };
+            query.difficulty = { $regex: new RegExp(`^${escapeRegex(difficulty)}$`, 'i') };
         }
 
         const questions = await Question.find(query).sort({ date: -1 });
@@ -413,8 +438,8 @@ app.post('/api/questions', async (req, res) => {
         let { title, company, topic, difficulty, desc, constraints, snippets, date, img, slug, testCases, images, status } = req.body;
 
         // Security: Only allow 'approved' status if Admin Key is present
-        const adminSecret = process.env.ADMIN_SECRET || "admin";
-        const isAdmin = req.headers['x-admin-secret'] === adminSecret;
+        const adminSecret = process.env.ADMIN_SECRET;
+        const isAdmin = adminSecret && req.headers['x-admin-secret'] === adminSecret;
 
         if (!isAdmin) {
             status = 'pending'; // Force pending for public submissions
