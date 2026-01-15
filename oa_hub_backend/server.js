@@ -3,9 +3,52 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const rateLimit = require('express-rate-limit');
+const validator = require('validator');
 const connectDB = require('./config/db');
 const Question = require('./models/Question');
 const Company = require('./models/Company');
+
+// --- Input Sanitization Helpers ---
+// Sanitize string: trim, escape HTML, limit length
+function sanitizeString(str, maxLength = 1000) {
+    if (typeof str !== 'string') return '';
+    return validator.escape(str.trim()).substring(0, maxLength);
+}
+
+// Sanitize basic text (no HTML escape, just trim and limit)
+function sanitizeText(str, maxLength = 10000) {
+    if (typeof str !== 'string') return '';
+    return str.trim().substring(0, maxLength);
+}
+
+// Validate and sanitize difficulty
+function sanitizeDifficulty(val) {
+    const valid = ['Easy', 'Medium', 'Hard'];
+    return valid.includes(val) ? val : 'Medium';
+}
+
+// Validate and sanitize topic
+function sanitizeTopic(val) {
+    const valid = ['Arrays', 'Strings', 'LinkedList', 'Trees', 'Graphs', 'DP', 'Heaps', 'Backtracking', 'System Design', 'Matrix', 'Other'];
+    if (typeof val !== 'string') return 'Other';
+    const normalized = val.trim();
+    // Handle common variations
+    if (normalized === 'String') return 'Strings';
+    if (normalized === 'Linked List') return 'LinkedList';
+    if (normalized === 'Dynamic Programming') return 'DP';
+    return valid.includes(normalized) ? normalized : 'Other';
+}
+
+// Sanitize slug (alphanumeric and dashes only)
+function sanitizeSlug(str) {
+    if (typeof str !== 'string') return '';
+    return str.toLowerCase().replace(/[^a-z0-9-]/g, '').substring(0, 200);
+}
+
+// Validate MongoDB ObjectId
+function isValidObjectId(id) {
+    return mongoose.Types.ObjectId.isValid(id);
+}
 
 // Load environment variables
 dotenv.config();
@@ -81,8 +124,20 @@ app.get('/health', async (req, res) => {
 app.post('/api/upload/image', async (req, res) => {
     try {
         const { image } = req.body;
-        if (!image) {
+
+        // --- INPUT VALIDATION ---
+        if (!image || typeof image !== 'string') {
             return res.status(400).json({ error: "No image provided" });
+        }
+
+        // Validate it's a base64 image
+        if (!image.startsWith('data:image/')) {
+            return res.status(400).json({ error: "Invalid image format. Must be base64 encoded." });
+        }
+
+        // Limit image size (~20MB base64)
+        if (image.length > 27000000) {
+            return res.status(400).json({ error: "Image too large. Maximum 20MB allowed." });
         }
 
         console.log("Debug: Uploading single image to Cloudinary...");
@@ -306,25 +361,57 @@ function escapeRegex(text) {
 // 1. Get All Questions (User Perspective: Browse Feed)
 app.get('/api/questions', async (req, res) => {
     try {
-        const { company, topic, difficulty } = req.query;
+        let { company, topic, difficulty, page = 1, limit = 12, search } = req.query;
         let query = { status: 'approved' };
 
-        if (company) {
+        // Sanitize query parameters (limit length, prevent abuse)
+        if (company && typeof company === 'string') {
+            company = company.substring(0, 100);
             query.company = { $regex: new RegExp(escapeRegex(company), 'i') };
         }
-        if (topic) {
+        if (topic && typeof topic === 'string') {
+            topic = topic.substring(0, 50);
             query.topic = { $regex: new RegExp(`^${escapeRegex(topic)}$`, 'i') };
         }
-        if (difficulty) {
+        if (difficulty && typeof difficulty === 'string') {
+            difficulty = difficulty.substring(0, 20);
             query.difficulty = { $regex: new RegExp(`^${escapeRegex(difficulty)}$`, 'i') };
         }
 
-        const questions = await Question.find(query).sort({ date: -1 });
+        // Search Implementation
+        if (search && typeof search === 'string') {
+            const searchSanitized = search.substring(0, 100);
+            const searchRegex = new RegExp(escapeRegex(searchSanitized), 'i');
+            query.$or = [
+                { title: { $regex: searchRegex } },
+                { company: { $regex: searchRegex } }
+            ];
+        }
+
+        // Pagination
+        const pageNum = parseInt(page) || 1;
+        const limitNum = parseInt(limit) || 12;
+        const skip = (pageNum - 1) * limitNum;
+
+        const total = await Question.countDocuments(query);
+        const questions = await Question.find(query)
+            .sort({ date: -1 })
+            .skip(skip)
+            .limit(limitNum);
+
         const formatted = questions.map(q => ({
             ...q.toObject(),
             id: q._id
         }));
-        res.json(formatted);
+
+        res.json({
+            questions: formatted,
+            pagination: {
+                total,
+                page: pageNum,
+                pages: Math.ceil(total / limitNum)
+            }
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server Error' });
@@ -334,7 +421,14 @@ app.get('/api/questions', async (req, res) => {
 // 2. Get Company Profile (Entity View)
 app.get('/api/companies/:slug', async (req, res) => {
     try {
-        const slug = req.params.slug.toLowerCase();
+        // Sanitize slug: lowercase, alphanumeric and dashes only, limit length
+        let slug = req.params.slug || '';
+        slug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '').substring(0, 100);
+
+        if (!slug) {
+            return res.status(400).json({ error: "Invalid company slug" });
+        }
+
         console.log(`Debug: Fetching company profile for slug: '${slug}'`);
 
         const company = await Company.findOne({ slug });
@@ -376,9 +470,19 @@ app.get('/api/companies/:slug', async (req, res) => {
 // 3. Get All Companies (For Directories/Sitemap)
 app.get('/api/companies', async (req, res) => {
     try {
-        const companies = await Company.find().sort({ name: 1 });
+        const { search } = req.query;
+        let query = {};
+
+        if (search && typeof search === 'string') {
+            // Escape regex special characters to prevent errors
+            const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            query.name = { $regex: new RegExp(escapedSearch, 'i') };
+        }
+
+        const companies = await Company.find(query).sort({ name: 1 });
         res.json(companies);
     } catch (err) {
+        console.error("Error fetching companies:", err);
         res.status(500).json({ error: 'Server Error' });
     }
 });
@@ -437,6 +541,52 @@ app.post('/api/questions', async (req, res) => {
     try {
         let { title, company, topic, difficulty, desc, constraints, snippets, date, img, slug, testCases, images, status } = req.body;
 
+        // --- INPUT VALIDATION & SANITIZATION ---
+        // Sanitize all string inputs
+        title = sanitizeString(title, 200);
+        company = sanitizeString(company, 100);
+        topic = sanitizeTopic(topic);
+        difficulty = sanitizeDifficulty(difficulty);
+        desc = sanitizeText(desc, 50000); // Allow longer descriptions
+        constraints = sanitizeText(constraints, 5000);
+        slug = slug ? sanitizeSlug(slug) : '';
+        img = sanitizeString(img, 50); // CSS class name
+
+        // Validate images array (limit count and size)
+        if (images && Array.isArray(images)) {
+            if (images.length > 10) {
+                return res.status(400).json({ error: "Too many images. Maximum 10 allowed." });
+            }
+            // Check each image is a string and not excessively long (base64 can be large but reasonable)
+            images = images.filter(img => typeof img === 'string' && img.length < 20000000); // ~15MB per image max
+        } else {
+            images = [];
+        }
+
+        // Validate testCases array structure
+        if (testCases && Array.isArray(testCases)) {
+            testCases = testCases.slice(0, 50).map(tc => ({
+                input: Array.isArray(tc.input) ? tc.input : [],
+                output: tc.output !== undefined ? tc.output : null
+            }));
+        } else {
+            testCases = [];
+        }
+
+        // Validate snippets object
+        if (snippets && typeof snippets === 'object') {
+            const allowedLangs = ['cpp', 'java', 'python', 'javascript'];
+            const cleanSnippets = {};
+            for (const lang of allowedLangs) {
+                if (snippets[lang] && typeof snippets[lang] === 'string') {
+                    cleanSnippets[lang] = snippets[lang].substring(0, 50000);
+                }
+            }
+            snippets = cleanSnippets;
+        } else {
+            snippets = {};
+        }
+
         // Security: Only allow 'approved' status if Admin Key is present
         const adminSecret = process.env.ADMIN_SECRET;
         const isAdmin = adminSecret && req.headers['x-admin-secret'] === adminSecret;
@@ -449,7 +599,7 @@ app.post('/api/questions', async (req, res) => {
         let processedImages = [];
         if (images && Array.isArray(images)) {
             for (let image of images) {
-                if (image.startsWith('data:image')) {
+                if (typeof image === 'string' && image.startsWith('data:image')) {
                     try {
                         const uploadRes = await cloudinary.uploader.upload(image, {
                             folder: "oa_hub_uploads",
@@ -458,27 +608,25 @@ app.post('/api/questions', async (req, res) => {
                         processedImages.push(uploadRes.secure_url);
                     } catch (upErr) {
                         console.error("Cloudinary Upload Error:", upErr.message);
-                        // Fallback: keep original base64 if upload fails (e.g. invalid keys)
-                        processedImages.push(image);
+                        // Skip failed uploads for security
                     }
-                } else {
+                } else if (typeof image === 'string' && validator.isURL(image, { protocols: ['https'] })) {
+                    // Only allow HTTPS URLs (existing Cloudinary URLs)
                     processedImages.push(image);
                 }
             }
         }
 
         // Apply Defaults for "Quick Submit" (Pending Mode)
-        // Check strict empty strings because frontend might send ""
-        if (!title || (typeof title === 'string' && title.trim() === "")) {
+        if (!title || title.trim() === "") {
             title = `Snapshot Upload ${new Date().toISOString().substring(0, 19).replace('T', ' ')}`;
-            // status is already handled above or passed in
         }
-        if (!desc || (typeof desc === 'string' && desc.trim() === "")) desc = "See attached screenshots for problem description.";
-        if (!company || (typeof company === 'string' && company.trim() === "")) company = "Unknown";
-        if (!topic || (typeof topic === 'string' && topic.trim() === "")) topic = "Arrays";
-        if (!difficulty || (typeof difficulty === 'string' && difficulty.trim() === "")) difficulty = "Medium";
+        if (!desc || desc.trim() === "") desc = "See attached screenshots for problem description.";
+        if (!company || company.trim() === "") company = "Unknown";
+        if (!topic || topic.trim() === "") topic = "Arrays";
+        if (!difficulty || difficulty.trim() === "") difficulty = "Medium";
 
-        console.log("Debug: Final Data for Create:", { title, company, topic, difficulty, desc, status, isAdmin });
+        console.log("Debug: Final Data for Create:", { title, company, topic, difficulty, desc: desc.substring(0, 100), status, isAdmin });
 
         // Auto-generate slug if not provided
         let questionSlug = slug;
@@ -562,7 +710,52 @@ app.post('/api/questions', async (req, res) => {
 // 5a. Update Question (Admin Perspective: Edit Content)
 app.put('/api/questions/:id', checkAdmin, async (req, res) => {
     try {
-        const { title, company, topic, difficulty, desc, constraints, snippets, date, img, slug, testCases, images, deletedImages } = req.body;
+        const id = req.params.id;
+
+        // Validate ObjectId
+        if (!isValidObjectId(id)) {
+            return res.status(400).json({ error: "Invalid question ID format" });
+        }
+
+        let { title, company, topic, difficulty, desc, constraints, snippets, date, img, slug, testCases, images, deletedImages } = req.body;
+
+        // --- INPUT VALIDATION & SANITIZATION ---
+        title = sanitizeString(title, 200);
+        company = sanitizeString(company, 100);
+        topic = sanitizeTopic(topic);
+        difficulty = sanitizeDifficulty(difficulty);
+        desc = sanitizeText(desc, 50000);
+        constraints = sanitizeText(constraints, 5000);
+        slug = slug ? sanitizeSlug(slug) : undefined;
+        img = sanitizeString(img, 50);
+
+        // Validate testCases
+        if (testCases && Array.isArray(testCases)) {
+            testCases = testCases.slice(0, 50).map(tc => ({
+                input: Array.isArray(tc.input) ? tc.input : [],
+                output: tc.output !== undefined ? tc.output : null
+            }));
+        }
+
+        // Validate snippets
+        if (snippets && typeof snippets === 'object') {
+            const allowedLangs = ['cpp', 'java', 'python', 'javascript'];
+            const cleanSnippets = {};
+            for (const lang of allowedLangs) {
+                if (snippets[lang] && typeof snippets[lang] === 'string') {
+                    cleanSnippets[lang] = snippets[lang].substring(0, 50000);
+                }
+            }
+            snippets = cleanSnippets;
+        }
+
+        // Validate images array
+        if (images && Array.isArray(images)) {
+            images = images.filter(img =>
+                typeof img === 'string' &&
+                (img.startsWith('data:image') || validator.isURL(img, { protocols: ['https'] }))
+            ).slice(0, 10);
+        }
 
         // Handle Image Deletions (Frontend sends array of URLs to delete)
         if (deletedImages && Array.isArray(deletedImages) && deletedImages.length > 0) {
@@ -1130,10 +1323,30 @@ class Solution:
 
 // 4. Code Execution Engine
 app.post('/api/execute', async (req, res) => {
-    const { code, language, questionId, customInput } = req.body;
+    let { code, language, questionId, customInput } = req.body;
     const vm = require('vm');
 
     try {
+        // --- INPUT VALIDATION ---
+        // Validate language
+        const allowedLanguages = ['cpp', 'python', 'java', 'javascript'];
+        if (!language || typeof language !== 'string' || !allowedLanguages.includes(language)) {
+            return res.json({ status: "error", logs: ["> Invalid or unsupported language."] });
+        }
+
+        // Validate code (must be string, limit length to prevent abuse)
+        if (!code || typeof code !== 'string') {
+            return res.json({ status: "error", logs: ["> No code provided."] });
+        }
+        if (code.length > 100000) { // 100KB limit
+            return res.json({ status: "error", logs: ["> Code too long. Maximum 100KB allowed."] });
+        }
+
+        // Validate questionId
+        if (!questionId || !isValidObjectId(questionId)) {
+            return res.json({ status: "error", logs: ["> Invalid question ID."] });
+        }
+
         const question = await Question.findById(questionId);
         if (!question) {
             return res.json({ status: "error", logs: ["> Question not found."] });

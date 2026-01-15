@@ -3,10 +3,14 @@ import { type Metadata } from "next";
 import { Navbar } from "@/components/Navbar";
 import { CodePlayer } from "@/components/CodePlayer";
 import { AuthorCard } from "@/components/AuthorCard";
+import { QuestionInteractions } from "@/components/QuestionInteractions";
+import { MobileQuestionLayout } from "@/components/MobileQuestionLayout";
 import { CheckCircle, Share2, ListPlus, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { cn, API_URL } from "@/lib/utils";
 import { type Question } from "@/types";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface PageProps {
     params: Promise<{ slug: string }>;
@@ -25,16 +29,7 @@ async function getQuestion(slug: string): Promise<Question | null> {
     }
 }
 
-async function getUpNext(currentId: string | number): Promise<Question[]> {
-    try {
-        const res = await fetch(`${API_URL}/api/questions`, { cache: 'no-store' });
-        if (!res.ok) return [];
-        const all = await res.json();
-        return all.filter((q: Question) => q.id !== currentId).slice(0, 5);
-    } catch (error) {
-        return [];
-    }
-}
+
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { slug } = await params;
@@ -81,7 +76,6 @@ export default async function QuestionPage({ params }: PageProps) {
         );
     }
 
-    const upNext = await getUpNext(question.id);
     const companySlug = question.company.toLowerCase().replace(/\s+/g, '-');
 
     // JSON-LD Schema
@@ -110,117 +104,165 @@ export default async function QuestionPage({ params }: PageProps) {
             />
 
             <Navbar />
-            <main className="flex-1 flex overflow-hidden">
-                {/* Left Column: Code Editor */}
-                <div className="flex-1 border-r border-dark-800 bg-dark-900 overflow-hidden flex flex-col">
-                    <CodePlayer question={question} />
-                </div>
-
-                {/* Right Column: Details & Up Next */}
-                <div className="w-[450px] flex flex-col border-l border-dark-800 bg-black overflow-y-auto custom-scroll">
-
-                    {/* Problem Details */}
-                    <div className="p-6 border-b border-dark-800">
-                        <div className="flex flex-col gap-4">
-                            <div className="flex items-center justify-between">
-                                <h1 className="text-2xl font-bold text-white tracking-tight">{question.title}</h1>
-                                {question.tags?.includes("New") && (
-                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-brand text-black uppercase">New</span>
-                                )}
-                            </div>
-
-                            <div className="flex items-center gap-4 text-sm text-gray-400">
-                                <span className={cn(
-                                    "font-bold px-2 py-0.5 rounded text-xs",
-                                    question.difficulty === "Easy" ? "text-green-400 bg-green-400/10" :
-                                        question.difficulty === "Medium" ? "text-yellow-400 bg-yellow-400/10" :
-                                            "text-red-400 bg-red-400/10"
-                                )}>
-                                    {question.difficulty}
-                                </span>
-                                <span>{question.duration}</span>
-
-                                <div className="hidden sm:flex flex-col items-end ml-auto leading-tight">
-                                    <span className="text-[10px] text-gray-600">
-                                        Published {new Date(question.date || Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                                    </span>
-                                    <div className="flex items-center gap-1 text-xs text-green-500 font-medium bg-green-500/10 px-1.5 py-0.5 rounded">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                                        Updated {new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="text-gray-400 leading-relaxed text-xs line-clamp-2">
-                                {question.desc}
-                            </div>
-
-                            {/* SEO Content: Approach & Complexity */}
-                            {question.approach && (
-                                <div className="mt-4 bg-dark-800 p-4 rounded-lg">
-                                    <h2 className="text-sm font-bold text-white mb-2">Approach & Intuition</h2>
-                                    <div className="text-xs text-gray-400 prose prose-invert max-w-none whitespace-pre-wrap">
-                                        {question.approach.replace(/###/g, '')}
-                                    </div>
-                                </div>
-                            )}
-
-                            {question.complexity && (
-                                <div className="grid grid-cols-2 gap-4 mt-2">
-                                    <div className="bg-dark-800 p-3 rounded border border-dark-700">
-                                        <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">Time Complexity</div>
-                                        <div className="text-sm font-mono text-brand">{question.complexity.time}</div>
-                                    </div>
-                                    <div className="bg-dark-800 p-3 rounded border border-dark-700">
-                                        <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">Space Complexity</div>
-                                        <div className="text-sm font-mono text-purple-400">{question.complexity.space}</div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Company Link */}
-                            <div className="flex items-center gap-3 mt-4 pt-4 border-t border-dark-800">
-                                <Link href={`/company/${companySlug}`} className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shrink-0 hover:scale-105 transition-transform", question.img)}>
-                                    {question.company[0]}
-                                </Link>
-                                <div>
-                                    <div className="text-xs text-gray-500 uppercase font-bold">Asked at</div>
-                                    <Link href={`/company/${companySlug}`} className="text-white font-bold hover:text-brand transition-colors">
-                                        {question.company}
-                                    </Link>
-                                </div>
-                            </div>
-
-                            {/* EEAT: Author Signal */}
-                            <div className="mt-8 pt-8 border-t border-dark-800">
-                                <AuthorCard />
-                            </div>
-
+            <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+                <MobileQuestionLayout
+                    editor={
+                        <div className="flex-1 flex flex-col h-full">
+                            <CodePlayer question={question} />
                         </div>
-                    </div>
+                    }
+                    details={
+                        <div className="h-full flex flex-col">
+                            {/* Problem Details */}
+                            <div className="p-6 flex-1">
+                                <div className="flex flex-col gap-6">
 
-                    {/* Up Next List */}
-                    <div className="p-6">
-                        <h3 className="font-bold text-gray-400 text-xs uppercase tracking-wider mb-4">Up Next</h3>
-                        <div className="space-y-3">
-                            {upNext.map(q => (
-                                <Link key={q.id} href={`/question/${q.slug || q.id}`} className="flex gap-3 p-2 -mx-2 hover:bg-dark-800 rounded group transition-colors">
-                                    <div className="relative w-24 aspect-video bg-dark-800 rounded overflow-hidden shrink-0 border border-dark-700 group-hover:border-brand/50">
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-[10px]", q.img)}>{q.company[0]}</div>
+                                    {/* Mobile/Tablet ONLY: Full Problem Description (Replicates Left Panel) */}
+                                    <div className="lg:hidden flex flex-col gap-6">
+                                        <div className="flex flex-col gap-4">
+                                            <div className="flex items-start justify-between gap-4">
+                                                <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight leading-tight">{question.title}</h1>
+                                                {question.tags?.includes("New") && (
+                                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-brand text-black uppercase shrink-0 mt-1">New</span>
+                                                )}
+                                            </div>
+
+                                            {/* Mobile Difficulty/Stats Row */}
+                                            <div className="flex items-center flex-wrap gap-3 text-sm text-gray-400">
+                                                <span className={cn(
+                                                    "font-bold px-2 py-0.5 rounded text-xs",
+                                                    question.difficulty === "Easy" ? "text-green-400 bg-green-400/10" :
+                                                        question.difficulty === "Medium" ? "text-yellow-400 bg-yellow-400/10" :
+                                                            "text-red-400 bg-red-400/10"
+                                                )}>
+                                                    {question.difficulty}
+                                                </span>
+                                                <span className="text-xs">{question.duration}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Markdown Description */}
+                                        <div className="prose prose-invert prose-sm max-w-none 
+                                            prose-headings:text-gray-100 prose-headings:font-bold prose-headings:mb-3 prose-headings:mt-6
+                                            prose-p:text-gray-300 prose-p:leading-7 prose-p:mb-4
+                                            prose-strong:text-white prose-strong:font-bold
+                                            prose-code:bg-[#282828] prose-code:text-[#e6e6e6] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-sm prose-code:font-mono prose-code:text-[13px] prose-code:before:content-none prose-code:after:content-none
+                                            prose-pre:bg-[#282828] prose-pre:border prose-pre:border-dark-600 prose-pre:rounded-lg prose-pre:p-4
+                                            prose-li:text-gray-300 prose-li:marker:text-gray-500 prose-li:mb-2
+                                            ">
+                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                {question.desc}
+                                            </ReactMarkdown>
+                                        </div>
+
+                                        {/* Examples */}
+                                        <div className="space-y-6">
+                                            {question.testCases?.slice(0, 3).map((tc, i) => (
+                                                <div key={i}>
+                                                    <h3 className="text-white font-bold text-base mb-3">Example {i + 1}:</h3>
+                                                    <div className="bg-[#1a1a1a] rounded-lg p-4 font-mono text-sm border-l-2 border-dark-600">
+                                                        <div className="flex gap-3 mb-2">
+                                                            <span className="text-gray-500 font-medium select-none min-w-[50px]">Input:</span>
+                                                            <span className="text-gray-200 break-all">{JSON.stringify(tc.input)}</span>
+                                                        </div>
+                                                        <div className="flex gap-3">
+                                                            <span className="text-gray-500 font-medium select-none min-w-[50px]">Output:</span>
+                                                            <span className="text-gray-200 break-all">{JSON.stringify(tc.output)}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Constraints */}
+                                        {question.constraints && (
+                                            <div className="pt-6 border-t border-dark-800">
+                                                <h3 className="text-white font-bold text-base mb-4">Constraints:</h3>
+                                                <div className="prose prose-invert prose-sm max-w-none 
+                                                         prose-li:text-gray-300 prose-li:marker:text-gray-500 prose-li:mb-1
+                                                         prose-code:bg-[#282828] prose-code:text-[#e6e6e6] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-sm prose-code:font-mono prose-code:text-[13px] prose-code:before:content-none prose-code:after:content-none
+                                                    ">
+                                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                        {question.constraints}
+                                                    </ReactMarkdown>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Divider for Metadata */}
+                                        <div className="h-px bg-dark-800 my-4" />
+                                    </div>
+
+                                    {/* Metadata Section - Visible on All but styled for sidebar on Desktop */}
+                                    <div className="flex flex-col gap-4">
+
+                                        {/* Status & Interactions Row */}
+                                        <div className="flex items-center flex-wrap gap-3 text-sm text-gray-400 pb-4 border-b border-dark-800">
+                                            <span className={cn(
+                                                "font-bold px-2 py-0.5 rounded text-xs",
+                                                question.difficulty === "Easy" ? "text-green-400 bg-green-400/10" :
+                                                    question.difficulty === "Medium" ? "text-yellow-400 bg-yellow-400/10" :
+                                                        "text-red-400 bg-red-400/10"
+                                            )}>
+                                                {question.difficulty}
+                                            </span>
+                                            <span className="text-xs">{question.duration}</span>
+
+                                            <div className="ml-auto">
+                                                <QuestionInteractions question={question} />
+                                            </div>
+                                        </div>
+
+                                        {/* SEO Content: Approach & Complexity */}
+                                        {question.approach && (
+                                            <div className="bg-dark-800 p-4 rounded-lg border border-dark-700">
+                                                <h2 className="text-xs font-bold text-white mb-2 uppercase tracking-wide">Approach Preview</h2>
+                                                <div className="text-xs text-gray-400 prose prose-invert max-w-none whitespace-pre-wrap line-clamp-[10]">
+                                                    {question.approach.replace(/###/g, '')}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {question.complexity && (
+                                            <div className="grid grid-cols-1 gap-3">
+                                                <div className="bg-dark-900 p-3 rounded border border-dark-700">
+                                                    <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">Time Complexity</div>
+                                                    <div className="text-sm font-mono text-brand truncate" title={question.complexity.time}>{question.complexity.time}</div>
+                                                </div>
+                                                <div className="bg-dark-900 p-3 rounded border border-dark-700">
+                                                    <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">Space Complexity</div>
+                                                    <div className="text-sm font-mono text-purple-400 truncate" title={question.complexity.space}>{question.complexity.space}</div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Company Link */}
+                                        <div className="flex items-center gap-3 pt-2">
+                                            <Link href={`/company/${companySlug}`} className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shrink-0 hover:scale-105 transition-transform bg-dark-800 border border-dark-700", question.img)}>
+                                                {question.company[0]}
+                                            </Link>
+                                            <div>
+                                                <div className="text-[10px] text-gray-500 uppercase font-bold">Asked at</div>
+                                                <Link href={`/company/${companySlug}`} className="text-sm text-white font-bold hover:text-brand transition-colors">
+                                                    {question.company}
+                                                </Link>
+                                            </div>
+                                        </div>
+
+                                        {/* EEAT: Author Signal */}
+                                        <div className="pt-4 border-t border-dark-800">
+                                            <AuthorCard />
+                                        </div>
+
+                                        <div className="text-[10px] text-gray-600 font-mono text-center mt-4">
+                                            Last updated {new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                                         </div>
                                     </div>
-                                    <div className="min-w-0">
-                                        <h4 className="text-white font-medium text-sm truncate group-hover:text-brand transition-colors">{q.title}</h4>
-                                        <p className="text-gray-500 text-xs mt-0.5">{q.company}</p>
-                                        <p className="text-[10px] text-gray-600 mt-1">{q.difficulty}</p>
-                                    </div>
-                                </Link>
-                            ))}
+                                </div>
+                            </div>
                         </div>
-                    </div>
-
-                </div>
+                    }
+                />
             </main>
         </div>
     );

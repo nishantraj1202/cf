@@ -1,67 +1,199 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Search, Upload, X, Menu, Flame } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Search, Upload, X, Menu, Flame, User, Loader2 } from "lucide-react";
+import { API_URL, cn } from "@/lib/utils";
 
 export function Navbar() {
-    const [isOpen, setIsOpen] = React.useState(false);
+    const [isOpen, setIsOpen] = useState(false);
+
+    // Search State
+    const pathname = usePathname();
+    const router = useRouter();
+    const [query, setQuery] = useState("");
+    const [suggestions, setSuggestions] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const searchRef = useRef<HTMLDivElement>(null);
+
+    const isCompanyContext = pathname?.startsWith("/companies");
+    const placeholder = isCompanyContext ? "Search companies..." : "Search videos... just kidding, Questions";
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setShowSuggestions(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(async () => {
+            if (query.trim().length > 1) {
+                setIsLoading(true);
+                try {
+                    const endpoint = isCompanyContext ? "/api/companies" : "/api/questions";
+                    const res = await fetch(`${API_URL}${endpoint}?search=${encodeURIComponent(query)}&limit=5`);
+                    const data = await res.json();
+
+                    if (isCompanyContext) {
+                        setSuggestions(Array.isArray(data) ? data.slice(0, 5) : []);
+                    } else {
+                        setSuggestions(data.questions ? data.questions.slice(0, 5) : []);
+                    }
+                    setShowSuggestions(true);
+                } catch (error) {
+                    console.error("Search error:", error);
+                    setSuggestions([]);
+                } finally {
+                    setIsLoading(false);
+                }
+            } else {
+                setSuggestions([]);
+                setShowSuggestions(false);
+            }
+        }, 300);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [query, isCompanyContext]);
+
+    const handleSearchSubmit = (e?: React.KeyboardEvent) => {
+        if (e && e.key !== "Enter") return;
+
+        if (query.trim()) {
+            setShowSuggestions(false);
+            if (isCompanyContext) {
+                // For companies, we might just filter the list or go to the first result? 
+                // User said "in company section it should only search company". 
+                // Since we have a client-side filter on /companies, maybe we redirect there?
+                // But we are ALREADY there or on a detail page.
+                // Let's redirect to /companies?search=query OR just let the client side handle it if on /companies?
+                // Simpler: Redirect to valid search page.
+                // Actually, the CompanyList supports filtering. 
+                // IF we are on /companies, we could just let the local state handle it? 
+                // No, standard nav search usually redirects.
+                // Let's assume generic search redirect for now.
+                // But wait, the user removed the search bar FROM question page, but for companies, they specifically wanted a "right section" search bar.
+                // Does the Navbar Company search duplicate the one we just built?
+                // The user requested: "in company section it should only search company not questions".
+                // And "shift this in right section instead of here" referred to the LOCAL search bar.
+                // So we have TWO search bars in Companies section now? One in Navbar, one in Page.
+                // Usually Navbar search is global. If I make Navbar search context aware, it overrides the need for a page-specific search bar?
+                // NO, the user ASKED to move the page specific search bar to the right. 
+                // So likely both exist.
+                // Nav Search -> Quick Jump. Page Search -> Filter list.
+                window.location.href = isCompanyContext ? `/companies?search=${query}` : `/questions?search=${query}`;
+            } else {
+                window.location.href = `/questions?search=${query}`;
+            }
+        }
+    };
 
     return (
-        <header className="h-16 bg-dark-800 border-b border-dark-700 flex flex-col justify-center px-4 sm:px-8 shrink-0 z-50 sticky top-0">
-            <div className="flex items-center justify-between w-full h-full">
-                {/* Logo */}
-                <div className="flex items-center gap-6">
-                    <Link href="/" className="flex items-center text-2xl font-bold tracking-tight cursor-pointer group">
-                        <span className="text-white mr-1 group-hover:text-brand transition-colors">Prep</span>
-                        <span className="bg-brand text-black px-1.5 py-0.5 rounded-[4px] text-xl">Tracker</span>
+        <header className="h-16 bg-dark-800 border-b border-dark-700 flex items-center justify-between px-4 sm:px-8 shrink-0 z-30 sticky top-0">
+            {/* Logo */}
+            <div className="flex items-center gap-6">
+                <Link href="/" className="flex items-center text-2xl font-bold tracking-tight cursor-pointer group">
+                    <span className="text-white mr-1 group-hover:text-gray-200 transition-colors">Codinz</span>
+                    <span className="bg-brand text-black px-1.5 py-0.5 rounded-[4px] text-xl group-hover:bg-yellow-500 transition-colors shadow-lg shadow-orange-500/20">Hub</span>
+                </Link>
+                {/* Desktop Nav */}
+                <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+                    <Link href="/" className={cn("transition-colors", pathname === "/" ? "text-white font-bold" : "text-gray-400 hover:text-white")}>
+                        Home
                     </Link>
-                    {/* Desktop Nav */}
-                    <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-                        <Link href="/" className="text-white hover:text-brand transition-colors">
-                            Home
-                        </Link>
-                        <div className="flex gap-6 items-center">
-                            <Link href="/questions" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">
-                                Problem Set
-                            </Link>
-                            <Link href="/companies" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">
-                                Companies
-                            </Link>
-                            <Link href="/contribute" className="text-sm font-bold text-brand hover:text-brand/80 transition-colors flex items-center gap-1">
-                                <span className="text-lg">+</span> Upload Scene
-                            </Link>
-                        </div>
-                    </nav>
-                </div>
+                    <Link href="/questions" className={cn("transition-colors", pathname?.startsWith("/questions") ? "text-white font-bold" : "text-gray-400 hover:text-white")}>
+                        Problem Set
+                    </Link>
+                    <Link href="/companies" className={cn("transition-colors", pathname?.startsWith("/companies") ? "text-white font-bold" : "text-gray-400 hover:text-white")}>
+                        Companies
+                    </Link>
+                    <Link href="/contribute" className={cn("transition-colors", pathname?.startsWith("/contribute") ? "text-white font-bold" : "text-gray-400 hover:text-white")}>
+                        Contribute
+                    </Link>
+                </nav>
+            </div>
 
-                {/* Header Actions */}
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => alert("We are working on this... Will be updated soon...")}
-                        className="hidden sm:flex items-center gap-2 border border-brand text-brand hover:bg-brand hover:text-black px-3 py-1 rounded text-sm font-bold uppercase transition-all duration-200 cursor-pointer"
-                    >
-                        Premium
-                    </button>
-                    <div className="w-8 h-8 rounded-full bg-dark-600 flex items-center justify-center text-xs font-bold text-gray-400 border border-dark-500 cursor-pointer hover:border-brand hover:text-white transition-all">
-                        JD
+            {/* Search Area */}
+            <div className="flex-1 max-w-xl mx-8 hidden md:block relative" ref={searchRef}>
+                <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        {isLoading ? <Loader2 className="w-4 h-4 text-brand animate-spin" /> : <Search className="w-4 h-4 text-gray-500 group-focus-within:text-brand transition-colors" />}
                     </div>
-                    {/* Mobile Menu Toggle */}
-                    {/* Mobile Menu Toggle */}
-                    <button
-                        onClick={() => setIsOpen(!isOpen)}
-                        className="md:hidden w-10 h-10 flex items-center justify-center text-white hover:bg-dark-700/50 rounded-full transition-colors"
-                        aria-label="Toggle Menu"
-                    >
-                        {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                    </button>
+                    <input
+                        type="text"
+                        className="block w-full pl-10 pr-10 py-2 bg-black border border-dark-600 text-white text-sm rounded focus:ring-1 focus:ring-brand focus:border-brand transition-all placeholder-gray-600 focus:outline-none"
+                        placeholder={placeholder}
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
+                        onKeyDown={handleSearchSubmit}
+                    />
+                    {query && (
+                        <button
+                            onClick={() => { setQuery(""); setSuggestions([]); }}
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-500 hover:text-white"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    )}
+
+                    {/* Suggestions Dropdown */}
+                    {showSuggestions && suggestions.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-dark-800 border border-dark-600 rounded-lg shadow-xl overflow-hidden z-50">
+                            {suggestions.map((item, idx) => (
+                                <Link
+                                    key={idx}
+                                    href={isCompanyContext ? `/company/${item.slug}` : `/question/${item.titleSlug || item.slug}`} // Assuming question has slug/titleSlug
+                                    className="block px-4 py-3 hover:bg-dark-700 transition-colors border-b border-dark-700/50 last:border-0"
+                                    onClick={() => setShowSuggestions(false)}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-white text-sm font-medium">{item.title || item.name}</span>
+                                        <span className="text-xs text-gray-500 uppercase tracking-wider">{isCompanyContext ? "Company" : "Question"}</span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
                 </div>
+            </div>
+
+            {/* Header Actions */}
+            <div className="flex items-center gap-4">
+                <button
+                    onClick={() => alert("Upload feature coming soon!")}
+                    className="hidden sm:flex items-center gap-2 text-gray-300 hover:text-white text-sm font-medium"
+                >
+                    <Upload className="w-4 h-4" />
+                    Upload
+                </button>
+                <button
+                    onClick={() => alert("Go Premium for 4K coding resolution!")}
+                    className="hidden sm:flex items-center gap-2 border border-brand text-brand hover:bg-brand hover:text-black px-3 py-1 rounded text-sm font-bold uppercase transition-all duration-200 shadow-[0_0_10px_rgba(255,153,0,0.2)]"
+                >
+                    Premium
+                </button>
+                <div className="w-8 h-8 rounded-full bg-dark-600 flex items-center justify-center text-xs font-bold text-gray-400 border border-dark-500 cursor-pointer hover:border-white transition-colors">
+                    ME
+                </div>
+                {/* Mobile Menu Toggle */}
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="md:hidden w-10 h-10 flex items-center justify-center text-white hover:bg-dark-700/50 rounded-full transition-colors"
+                >
+                    {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                </button>
             </div>
 
             {/* Mobile Menu Dropdown */}
             {isOpen && (
-                <div className="absolute top-16 left-0 w-full bg-dark-900 border-b border-dark-700 p-4 flex flex-col gap-4 md:hidden shadow-2xl animate-fade-in">
-                    <Link href="/" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-brand py-2 border-b border-dark-800">
+                <div className="absolute top-16 left-0 w-full bg-dark-900 border-b border-dark-700 p-4 flex flex-col gap-4 md:hidden shadow-2xl animate-fade-in z-50">
+                    <Link href="/" onClick={() => setIsOpen(false)} className="text-white font-bold py-2 border-b border-dark-800">
                         Home
                     </Link>
                     <Link href="/questions" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-brand py-2 border-b border-dark-800">
@@ -70,26 +202,10 @@ export function Navbar() {
                     <Link href="/companies" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-brand py-2 border-b border-dark-800">
                         Companies
                     </Link>
-                    <Link href="/contribute" onClick={() => setIsOpen(false)} className="text-brand font-bold py-2 border-b border-dark-800">
-                        Upload Scene
+                    <Link href="/contribute" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-brand py-2 border-b border-dark-800">
+                        Contribute
                     </Link>
-                    <button
-                        onClick={() => {
-                            alert("We are working on this... Will be updated soon...");
-                            setIsOpen(false);
-                        }}
-                        className="text-left text-gray-300 hover:text-brand py-2 border-b border-dark-800 flex items-center gap-2"
-                    >
-                        <Flame className="w-4 h-4" />
-                        Best of 2024
-                    </button>
-                    <button
-                        onClick={() => {
-                            alert("We are working on this... Will be updated soon...");
-                            setIsOpen(false);
-                        }}
-                        className="text-left text-yellow-500 font-bold py-2"
-                    >
+                    <button className="text-left text-brand font-bold py-2">
                         Premium
                     </button>
                 </div>

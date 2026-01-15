@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodinzHub - Premium Coding Interview Prep</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#ff9900', // Signature Orange
+                        dark: {
+                            950: '#000000',
+                            900: '#121212',
+                            800: '#1f1f1f',
+                            700: '#262626',
+                            600: '#333333'
+                        }
+                    },
+                    animation: {
+                        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'slide-up': 'slideUp 0.3s ease-out forwards',
+                        'fade-in': 'fadeIn 0.2s ease-out forwards',
+                    },
+                    keyframes: {
+                        slideUp: {
+                            '0%': { transform: 'translateY(10px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #121212;
+        }
+
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Custom scrollbar */
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #121212;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background-color: #333;
+            border-radius: 4px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background-color: #ff9900;
+        }
+
+        textarea:focus {
+            outline: none;
+        }
+
+        /* Fullscreen utilities */
+        .player-fullscreen {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 50 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            border-radius: 0 !important;
+        }
+    </style>
+</head>
+
+<body class="text-gray-200 h-screen flex flex-col overflow-hidden selection:bg-brand selection:text-black">
+
+    <!-- Top Navbar -->
+    <header
+        class="h-16 bg-dark-800 border-b border-dark-700 flex items-center justify-between px-4 sm:px-8 shrink-0 z-30">
+        <!-- Logo -->
+        <div class="flex items-center gap-6">
+            <div class="flex items-center text-2xl font-bold tracking-tight cursor-pointer group"
+                onclick="closeCompiler()">
+                <span class="text-white mr-1 group-hover:text-gray-200 transition-colors">Codinz</span>
+                <span
+                    class="bg-brand text-black px-1.5 py-0.5 rounded-[4px] text-xl group-hover:bg-yellow-500 transition-colors shadow-lg shadow-orange-500/20">Hub</span>
+            </div>
+            <!-- Desktop Nav -->
+            <nav class="hidden md:flex items-center gap-6 text-sm font-medium">
+                <a href="#" class="text-white hover:text-brand transition-colors font-bold">Home</a>
+                <a href="#" class="text-gray-400 hover:text-white transition-colors">Top Rated</a>
+                <a href="#" class="text-gray-400 hover:text-white transition-colors">Premium</a>
+                <a href="#" class="text-gray-400 hover:text-white transition-colors">Community</a>
+            </nav>
+        </div>
+
+        <!-- Search Area -->
+        <div class="flex-1 max-w-xl mx-8 hidden md:block relative">
+            <div class="relative group">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i data-lucide="search"
+                        class="w-4 h-4 text-gray-500 group-focus-within:text-brand transition-colors"></i>
+                </div>
+                <input type="text" id="searchInput"
+                    class="block w-full pl-10 pr-10 py-2 bg-black border border-dark-600 text-white text-sm rounded focus:ring-1 focus:ring-brand focus:border-brand transition-all placeholder-gray-600"
+                    placeholder="Search videos... just kidding, questions">
+                <button id="clearSearch"
+                    class="hidden absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-500 hover:text-white">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Header Actions -->
+        <div class="flex items-center gap-4">
+            <button onclick="showToast('Upload feature coming soon!', 'info')"
+                class="hidden sm:flex items-center gap-2 text-gray-300 hover:text-white text-sm font-medium">
+                <i data-lucide="upload" class="w-4 h-4"></i>
+                Upload
+            </button>
+            <button onclick="showToast('Go Premium for 4K coding resolution!', 'brand')"
+                class="hidden sm:flex items-center gap-2 border border-brand text-brand hover:bg-brand hover:text-black px-3 py-1 rounded text-sm font-bold uppercase transition-all duration-200 shadow-[0_0_10px_rgba(255,153,0,0.2)]">
+                Premium
+            </button>
+            <div
+                class="w-8 h-8 rounded-full bg-dark-600 flex items-center justify-center text-xs font-bold text-gray-400 border border-dark-500 cursor-pointer hover:border-white transition-colors">
+                ME
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area (Browse View) -->
+    <div id="browseView" class="flex-1 flex overflow-hidden">
+        <!-- Sidebar -->
+        <aside
+            class="hidden lg:flex flex-col w-60 bg-dark-900 border-r border-dark-800 flex-shrink-0 overflow-y-auto custom-scroll py-6 px-3">
+            <div class="space-y-1 mb-8">
+                <a href="#"
+                    class="flex items-center gap-3 px-3 py-2 text-sm font-bold bg-dark-800 text-white rounded hover:bg-dark-700 transition-colors border-l-2 border-brand">
+                    <i data-lucide="home" class="w-4 h-4 text-brand"></i> Home
+                </a>
+                <a href="#"
+                    class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 rounded hover:bg-dark-800 hover:text-white transition-colors border-l-2 border-transparent">
+                    <i data-lucide="flame" class="w-4 h-4"></i> Trending Now
+                </a>
+                <a href="#"
+                    class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 rounded hover:bg-dark-800 hover:text-white transition-colors border-l-2 border-transparent">
+                    <i data-lucide="history" class="w-4 h-4"></i> Watch History
+                </a>
+                <a href="#"
+                    class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 rounded hover:bg-dark-800 hover:text-white transition-colors border-l-2 border-transparent">
+                    <i data-lucide="thumbs-up" class="w-4 h-4"></i> Liked Code
+                </a>
+            </div>
+
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 px-3">Categories</h3>
+            <div class="space-y-1">
+                <a href="#"
+                    class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 rounded hover:bg-dark-800 hover:text-white transition-colors">
+                    <i data-lucide="code" class="w-4 h-4"></i> Hardcore DSA
+                </a>
+                <a href="#"
+                    class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 rounded hover:bg-dark-800 hover:text-white transition-colors">
+                    <i data-lucide="server" class="w-4 h-4"></i> System Design
+                </a>
+                <a href="#"
+                    class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 rounded hover:bg-dark-800 hover:text-white transition-colors">
+                    <i data-lucide="database" class="w-4 h-4"></i> SQL Action
+                </a>
+                <a href="#"
+                    class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 rounded hover:bg-dark-800 hover:text-white transition-colors">
+                    <i data-lucide="terminal" class="w-4 h-4"></i> Shell Scripting
+                </a>
+            </div>
+
+            <div class="mt-8 px-3">
+                <div class="text-[10px] text-gray-500 leading-relaxed">
+                    &copy; 2026 CodinzHub<br>
+                    Terms • Privacy • Content Policy<br>
+                    <span class="text-dark-600">v2.4.0 (Stable)</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Question Grid -->
+        <main class="flex-1 overflow-y-auto custom-scroll p-4 sm:p-8 bg-dark-900">
+            <div class="max-w-7xl mx-auto">
+
+                <!-- Hero / Featured Section (Like a featured video) -->
+                <div onclick="openPlayer(1)"
+                    class="mb-10 relative w-full aspect-[21/9] md:aspect-[24/8] bg-dark-800 rounded-xl overflow-hidden cursor-pointer group border border-dark-700 hover:border-brand transition-all shadow-2xl">
+                    <!-- Background Gradient/Image Simulation -->
+                    <div class="absolute inset-0 bg-gradient-to-r from-black via-dark-900/80 to-transparent z-10"></div>
+                    <!-- A Techy/Matrix style background -->
+                    <div
+                        class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-700">
+                    </div>
+
+                    <div
+                        class="absolute inset-0 z-20 p-6 md:p-10 flex flex-col justify-end md:justify-center items-start">
+                        <span
+                            class="bg-brand text-black text-xs font-bold px-2 py-1 rounded uppercase tracking-wider mb-3 shadow">Featured
+                            Question</span>
+                        <h2 class="text-2xl md:text-4xl font-bold text-white mb-2 max-w-2xl leading-tight">Design a
+                            Global File Storage System</h2>
+                        <div class="flex items-center gap-3 text-sm text-gray-300 mb-6">
+                            <span class="font-bold text-white">Google</span>
+                            <span>•</span>
+                            <span>1.2M Views</span>
+                            <span>•</span>
+                            <span class="text-brand">Hard</span>
+                        </div>
+                        <button
+                            class="bg-white hover:bg-gray-200 text-black px-6 py-2.5 rounded font-bold flex items-center gap-2 transition-colors">
+                            <i data-lucide="play" class="w-5 h-5 fill-black"></i> Solve Now
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-6 flex items-center justify-between">
+                    <h1 class="text-xl font-bold text-white">Recommended Questions</h1>
+                    <div class="flex gap-2">
+                        <button
+                            class="bg-dark-800 text-white px-3 py-1 rounded text-xs font-bold border border-dark-700 hover:bg-dark-700">All</button>
+                        <button
+                            class="bg-transparent text-gray-400 px-3 py-1 rounded text-xs font-bold hover:text-white">New
+                            to you</button>
+                        <button
+                            class="bg-transparent text-gray-400 px-3 py-1 rounded text-xs font-bold hover:text-white">Recently
+                            Uploaded</button>
+                    </div>
+                </div>
+
+                <div id="questionsContainer"
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
+                    <!-- Cards will be populated here -->
+                </div>
+
+                <div id="emptyState" class="hidden flex flex-col items-center justify-center py-16 text-center">
+                    <i data-lucide="search-x" class="w-12 h-12 text-gray-600 mb-4"></i>
+                    <h3 class="text-lg font-bold text-white">No matches found</h3>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- PLAYER VIEW (Compiler) - Hidden by default -->
+    <div id="playerView" class="hidden flex-1 overflow-y-auto custom-scroll bg-black">
+        <div class="max-w-[1600px] mx-auto p-4 lg:p-6 flex flex-col lg:flex-row gap-6">
+
+            <!-- Left Column: The Player & Main Info -->
+            <div class="flex-1 w-full lg:w-[70%]">
+
+                <!-- THE PLAYER STAGE -->
+                <div id="playerContainer"
+                    class="w-full bg-[#1e1e1e] border border-dark-700 rounded-sm overflow-hidden flex flex-col relative group"
+                    style="aspect-ratio: 16/10; min-height: 500px;">
+
+                    <!-- Code Editor Area -->
+                    <div class="flex-1 flex flex-row relative">
+                        <!-- Problem Desc Split (30%) -->
+                        <div
+                            class="hidden md:block w-[35%] bg-dark-800 border-r border-dark-700 overflow-y-auto custom-scroll p-4 text-sm text-gray-300 leading-relaxed border-t-4 border-brand">
+                            <h3 id="playerProblemTitle" class="font-bold text-white mb-3 text-lg">Problem Title</h3>
+                            <div id="playerProblemDesc"></div>
+                        </div>
+
+                        <!-- Editor (65%) -->
+                        <div class="flex-1 flex flex-col bg-[#0f0f0f] relative">
+                            <div class="absolute top-2 right-2 z-10 flex gap-2">
+                                <span
+                                    class="text-[10px] font-mono text-gray-500 bg-black/50 px-2 py-1 rounded border border-white/10">Ctrl+Enter
+                                    to Run</span>
+                                <span
+                                    class="text-[10px] font-mono text-brand bg-brand/10 px-2 py-1 rounded border border-brand/20">C++</span>
+                            </div>
+                            <textarea id="codeEditor"
+                                class="flex-1 bg-[#0f0f0f] text-gray-300 font-mono text-sm p-4 resize-none border-none focus:ring-0 leading-relaxed spellcheck-false"
+                                spellcheck="false" placeholder="// Start coding here..."></textarea>
+
+                            <!-- Console Overlay (Hidden by default) -->
+                            <div id="consoleOverlay"
+                                class="h-40 bg-black/95 border-t border-dark-700 absolute bottom-0 left-0 right-0 transform translate-y-full transition-transform duration-300 flex flex-col z-20">
+                                <div
+                                    class="px-3 py-1 bg-dark-800 flex justify-between items-center border-b border-dark-700">
+                                    <span class="text-xs font-bold text-gray-400 flex items-center gap-2"><i
+                                            data-lucide="terminal" class="w-3 h-3"></i> CONSOLE</span>
+                                    <button onclick="toggleConsole()" class="text-gray-500 hover:text-white"><i
+                                            data-lucide="x" class="w-3 h-3"></i></button>
+                                </div>
+                                <div id="consoleOutput"
+                                    class="flex-1 p-3 font-mono text-xs text-gray-400 overflow-y-auto custom-scroll">
+                                </div>
+                            </div>
+
+                            <!-- Settings Menu Overlay (Hidden by default) -->
+                            <div id="settingsMenu"
+                                class="absolute bottom-4 right-4 w-48 bg-dark-800 rounded shadow-xl border border-dark-700 hidden animate-fade-in z-30">
+                                <div class="p-2 border-b border-dark-700 text-xs font-bold text-gray-400 uppercase">
+                                    Editor Settings</div>
+                                <div class="p-2">
+                                    <div class="text-xs text-white mb-2">Font Size</div>
+                                    <div class="flex gap-2">
+                                        <button onclick="changeFontSize('text-xs')"
+                                            class="flex-1 bg-dark-700 hover:bg-dark-600 text-xs py-1 rounded text-white">S</button>
+                                        <button onclick="changeFontSize('text-sm')"
+                                            class="flex-1 bg-brand text-black font-bold text-xs py-1 rounded">M</button>
+                                        <button onclick="changeFontSize('text-lg')"
+                                            class="flex-1 bg-dark-700 hover:bg-dark-600 text-xs py-1 rounded text-white">L</button>
+                                    </div>
+                                </div>
+                                <div class="p-2 border-t border-dark-700">
+                                    <div
+                                        class="flex justify-between items-center text-xs text-white hover:text-brand cursor-pointer">
+                                        <span>Quality</span>
+                                        <span class="text-brand font-bold">1080p</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Player Controls Bar -->
+                    <div
+                        class="h-12 bg-dark-800 border-t border-dark-700 flex items-center justify-between px-4 shrink-0 z-20 relative">
+                        <div class="flex items-center gap-4">
+                            <!-- Play Button -->
+                            <button onclick="runCode()"
+                                class="text-white hover:text-brand transition-colors transform hover:scale-110"
+                                title="Run Code (Ctrl+Enter)">
+                                <i data-lucide="play" class="w-6 h-6 fill-current"></i>
+                            </button>
+                            <!-- Volume/Sound (Fake) -->
+                            <button class="text-gray-400 hover:text-white">
+                                <i data-lucide="volume-2" class="w-5 h-5"></i>
+                            </button>
+                            <div class="text-xs font-mono text-gray-400">00:00 / 45:00</div>
+                        </div>
+
+                        <div class="flex items-center gap-4">
+                            <button onclick="toggleConsole()"
+                                class="text-gray-400 hover:text-white font-bold text-xs bg-dark-700 px-2 py-0.5 rounded border border-dark-600 hover:border-gray-500 transition-colors">
+                                CC
+                            </button>
+                            <button onclick="toggleSettings()"
+                                class="text-gray-400 hover:text-white transition-transform active:rotate-90">
+                                <i data-lucide="settings" class="w-5 h-5"></i>
+                            </button>
+                            <button onclick="toggleFullScreen()" class="text-gray-400 hover:text-white">
+                                <i data-lucide="maximize" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="h-1 w-full bg-dark-600 relative cursor-pointer group-hover:h-2 transition-all">
+                        <div class="h-full bg-brand w-[45%] relative">
+                            <div
+                                class="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Section -->
+                <div class="mt-4">
+                    <h1 id="mainTitle" class="text-2xl font-bold text-white mb-2">Problem Title Goes Here</h1>
+
+                    <div
+                        class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-dark-700 pb-4 gap-4">
+                        <div class="text-gray-400 text-sm">
+                            <span class="text-white font-medium">1,204,593 views</span> • 98% Rating
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <button onclick="showToast('Added to Liked Questions', 'brand')"
+                                class="flex items-center gap-2 px-4 py-2 bg-dark-800 hover:bg-dark-700 text-white rounded-full font-medium transition-colors">
+                                <i data-lucide="thumbs-up" class="w-4 h-4"></i> Like
+                            </button>
+                            <button
+                                class="flex items-center gap-2 px-4 py-2 bg-dark-800 hover:bg-dark-700 text-white rounded-full font-medium transition-colors">
+                                <i data-lucide="thumbs-down" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="showToast('Link copied to clipboard', 'info')"
+                                class="flex items-center gap-2 px-4 py-2 bg-dark-800 hover:bg-dark-700 text-white rounded-full font-medium transition-colors">
+                                <i data-lucide="share-2" class="w-4 h-4"></i> Share
+                            </button>
+                            <button onclick="showToast('Saved to Playlist', 'success')"
+                                class="flex items-center gap-2 px-4 py-2 bg-dark-800 hover:bg-dark-700 text-white rounded-full font-medium transition-colors">
+                                <i data-lucide="list-plus" class="w-4 h-4"></i> Save
+                            </button>
+                            <button class="p-2 bg-dark-800 hover:bg-dark-700 text-white rounded-full">
+                                <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Uploader Info -->
+                    <div class="mt-4 flex items-start gap-4">
+                        <div id="companyAvatar"
+                            class="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-lg shrink-0">
+                            G</div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 id="companyName" class="text-white font-bold text-base">Google</h3>
+                                <i data-lucide="check-circle" class="w-4 h-4 text-brand fill-current"></i>
+                            </div>
+                            <div class="text-gray-500 text-xs mt-0.5">250K Subscribers</div>
+
+                            <div
+                                class="mt-4 text-sm text-gray-300 bg-dark-800 p-4 rounded cursor-pointer hover:bg-dark-700 transition-colors">
+                                <p class="font-bold text-white mb-1">Problem Description</p>
+                                <p class="line-clamp-2 text-gray-400">Click to expand and read the full details about
+                                    the algorithmic challenge presented in the editor above. Ensure your time complexity
+                                    is optimal.</p>
+                                <p class="text-brand text-xs font-bold mt-2 uppercase">Show More</p>
+                            </div>
+
+                            <!-- Comments Tease -->
+                            <div class="mt-6">
+                                <div class="flex items-center gap-6 mb-4">
+                                    <span class="font-bold text-white">45 Comments</span>
+                                    <div class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+                                        <i data-lucide="align-left" class="w-4 h-4"></i> Sort by
+                                    </div>
+                                </div>
+                                <div class="flex gap-3">
+                                    <div
+                                        class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs shrink-0">
+                                        ME</div>
+                                    <input type="text" placeholder="Add a comment..."
+                                        class="bg-transparent border-b border-dark-600 w-full text-sm text-white focus:border-white focus:outline-none pb-1">
+                                </div>
+                                <!-- Mock Comment -->
+                                <div class="flex gap-3 mt-6">
+                                    <div
+                                        class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white text-xs shrink-0">
+                                        U1</div>
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-white font-bold text-xs">user123</span>
+                                            <span class="text-gray-500 text-xs">2 hours ago</span>
+                                        </div>
+                                        <p class="text-sm text-gray-300 mt-1">Great problem! The hashmap approach is
+                                            definitely O(n).</p>
+                                        <div class="flex items-center gap-3 mt-2 text-gray-500 text-xs">
+                                            <div class="flex items-center gap-1 cursor-pointer hover:text-white"><i
+                                                    data-lucide="thumbs-up" class="w-3 h-3"></i> 12</div>
+                                            <div class="cursor-pointer hover:text-white"><i data-lucide="thumbs-down"
+                                                    class="w-3 h-3"></i></div>
+                                            <span class="font-bold cursor-pointer hover:text-white">Reply</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="showToast('Subscribed!', 'brand')"
+                            class="ml-auto bg-brand hover:bg-yellow-500 text-black px-4 py-2 rounded font-bold uppercase text-sm tracking-wide">
+                            Subscribe
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Sidebar (Up Next) -->
+            <div class="w-full lg:w-[30%] shrink-0">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-gray-300">Up Next</h3>
+                    <div class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase">
+                        <span>Autoplay</span>
+                        <div class="w-8 h-4 bg-brand rounded-full relative cursor-pointer">
+                            <div class="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sidebarList" class="space-y-3">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"
+        class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        lucide.createIcons();
+
+        // On Load Toast
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                showToast("Welcome to CodinzHub 😉", "brand");
+            }, 800);
+        });
+
+        const questionsData = [
+            {
+                id: 1, company: "Google", title: "Design a Global File Storage System", topic: "System Design", difficulty: "Hard", likes: "98%", views: "1.2M", duration: "Hard", img: "bg-blue-600",
+                desc: "Design a distributed file storage system like Google Drive. Requirements: Upload, download, delete, sync, conflict resolution."
+            },
+            {
+                id: 2, company: "Google", title: "Merge k Sorted Lists", topic: "Heaps", difficulty: "Hard", likes: "95%", views: "850K", duration: "Hard", img: "bg-blue-600",
+                desc: "Merge k sorted linked lists and return it as one sorted list."
+            },
+            {
+                id: 3, company: "Amazon", title: "Find the Missing Number", topic: "Arrays", difficulty: "Easy", likes: "99%", views: "2.1M", duration: "Easy", img: "bg-yellow-600",
+                desc: "Given an array nums containing n distinct numbers in the range [0, n], return the only number in the range that is missing."
+            },
+            {
+                id: 4, company: "Microsoft", title: "Reverse Linked List Group K", topic: "LinkedList", difficulty: "Medium", likes: "92%", views: "600K", duration: "Med", img: "bg-sky-600",
+                desc: "Reverse the nodes of the list k at a time."
+            },
+            {
+                id: 5, company: "Uber", title: "Ride Matching Algorithm", topic: "System Design", difficulty: "Medium", likes: "97%", views: "1.5M", duration: "Med", img: "bg-neutral-800",
+                desc: "Design the core matching engine for a ride-sharing app."
+            },
+            {
+                id: 6, company: "Netflix", title: "Group Anagrams", topic: "Strings", difficulty: "Medium", likes: "94%", views: "920K", duration: "Med", img: "bg-red-600",
+                desc: "Given an array of strings, group the anagrams together."
+            },
+            {
+                id: 7, company: "Meta", title: "Binary Tree Vertical Order", topic: "Trees", difficulty: "Hard", likes: "91%", views: "430K", duration: "Hard", img: "bg-blue-800",
+                desc: "Return the vertical order traversal of a binary tree."
+            },
+            {
+                id: 8, company: "Apple", title: "Longest Substring No Repeats", topic: "Strings", difficulty: "Medium", likes: "96%", views: "1.8M", duration: "Med", img: "bg-neutral-700",
+                desc: "Find the length of the longest substring without repeating characters."
+            }
+        ];
+
+        // --- Render Browse View ---
+        const questionsContainer = document.getElementById('questionsContainer');
+
+        function renderBrowse() {
+            questionsContainer.innerHTML = '';
+            questionsData.forEach(q => {
+                const card = `
+                <div onclick="openPlayer(${q.id})" class="group cursor-pointer flex flex-col gap-2">
+                    <!-- Thumbnail Area -->
+                    <div class="relative w-full aspect-video bg-dark-800 rounded-lg overflow-hidden border border-transparent group-hover:border-dark-600">
+                        <div class="absolute inset-0 flex items-center justify-center opacity-80 group-hover:opacity-100 transition-opacity">
+                            <div class="${q.img} w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg">${q.company[0]}</div>
+                        </div>
+                        <div class="absolute bottom-1 right-1 bg-black/80 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                            ${q.duration}
+                        </div>
+                        <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </div>
+                    
+                    <!-- Meta Area -->
+                    <div class="flex gap-3 pr-4">
+                        <div class="${q.img} w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5">${q.company[0]}</div>
+                        <div>
+                            <h3 class="text-white font-bold text-sm leading-tight group-hover:text-brand line-clamp-2 mb-1">${q.title}</h3>
+                            <div class="text-gray-400 text-xs">
+                                <p class="hover:text-white transition-colors flex items-center gap-1">${q.company} <i data-lucide="check-circle" class="w-3 h-3 text-gray-500"></i></p>
+                                <p>${q.views} views • 2 days ago</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+                questionsContainer.innerHTML += card;
+            });
+            lucide.createIcons();
+        }
+
+        renderBrowse();
+
+        // --- Render Sidebar List ---
+        const sidebarList = document.getElementById('sidebarList');
+        function renderSidebar(currentId) {
+            sidebarList.innerHTML = '';
+            questionsData.filter(q => q.id !== currentId).forEach(q => {
+                const item = `
+                <div onclick="openPlayer(${q.id})" class="flex gap-2 cursor-pointer group">
+                    <div class="relative w-40 aspect-video bg-dark-800 rounded overflow-hidden shrink-0">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="${q.img} w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs">${q.company[0]}</div>
+                        </div>
+                        <div class="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 py-0.5 rounded">
+                            ${q.duration}
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-bold text-xs leading-tight group-hover:text-brand line-clamp-2 mb-1">${q.title}</h4>
+                        <div class="text-gray-500 text-[10px]">
+                            <p>${q.company}</p>
+                            <p>${q.views} views</p>
+                        </div>
+                        <span class="text-[10px] text-gray-400 bg-dark-800 px-1 rounded mt-1 inline-block">New</span>
+                    </div>
+                </div>
+                `;
+                sidebarList.innerHTML += item;
+            });
+        }
+
+        // --- Player Logic ---
+        const browseView = document.getElementById('browseView');
+        const playerView = document.getElementById('playerView');
+        const mainTitle = document.getElementById('mainTitle');
+        const companyAvatar = document.getElementById('companyAvatar');
+        const companyName = document.getElementById('companyName');
+        const playerProblemTitle = document.getElementById('playerProblemTitle');
+        const playerProblemDesc = document.getElementById('playerProblemDesc');
+        const codeEditor = document.getElementById('codeEditor');
+        const consoleOverlay = document.getElementById('consoleOverlay');
+        const consoleOutput = document.getElementById('consoleOutput');
+        const settingsMenu = document.getElementById('settingsMenu');
+        const playerContainer = document.getElementById('playerContainer');
+
+        function openPlayer(id) {
+            const q = questionsData.find(item => item.id === id);
+            if (!q) return;
+
+            // Switch View
+            browseView.classList.add('hidden');
+            playerView.classList.remove('hidden');
+
+            // Populate Data
+            mainTitle.textContent = q.title;
+            companyName.textContent = q.company;
+            companyAvatar.className = `w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-lg shrink-0 ${q.img}`;
+            companyAvatar.textContent = q.company[0];
+
+            playerProblemTitle.textContent = q.title;
+            playerProblemDesc.textContent = q.desc;
+
+            // Populate Sidebar
+            renderSidebar(id);
+
+            // Mock Code
+            if (q.topic === "System Design") {
+                codeEditor.value = `// System Design: ${q.title}\n// Write your architecture explanation here...\n\n`;
+            } else {
+                codeEditor.value = `#include <iostream>\n#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    // Solve: ${q.title}\n    void solve() {\n        \n    }\n};`;
+            }
+
+            // Reset UI
+            consoleOverlay.classList.add('translate-y-full');
+            consoleOutput.innerHTML = "";
+            settingsMenu.classList.add('hidden');
+
+            // Scroll to top
+            playerView.scrollTop = 0;
+        }
+
+        function closeCompiler() {
+            browseView.classList.remove('hidden');
+            playerView.classList.add('hidden');
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+            playerContainer.classList.remove('player-fullscreen');
+        }
+
+        function toggleConsole() {
+            consoleOverlay.classList.toggle('translate-y-full');
+        }
+
+        function toggleSettings() {
+            settingsMenu.classList.toggle('hidden');
+        }
+
+        function changeFontSize(sizeClass) {
+            codeEditor.classList.remove('text-xs', 'text-sm', 'text-lg');
+            codeEditor.classList.add(sizeClass);
+            toggleSettings(); // close menu
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                playerContainer.requestFullscreen().catch(err => {
+                    // Fallback for Safari/Mobile if needed, or simple CSS toggle
+                    playerContainer.classList.add('player-fullscreen');
+                });
+            } else {
+                document.exitFullscreen();
+                playerContainer.classList.remove('player-fullscreen');
+            }
+        }
+
+        // Listen for standard fullscreen change events to update styles
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                playerContainer.classList.remove('player-fullscreen');
+            } else {
+                playerContainer.classList.add('player-fullscreen');
+            }
+        });
+
+
+        // Keyboard Shortcut: Ctrl + Enter to Run
+        codeEditor.addEventListener('keydown', function (e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                runCode();
+            }
+        });
+
+        function runCode() {
+            // Open console if closed
+            consoleOverlay.classList.remove('translate-y-full');
+            consoleOutput.innerHTML = `<div class="text-yellow-500 mb-1">> Compiling...</div>`;
+
+            setTimeout(() => {
+                consoleOutput.innerHTML += `<div class="text-blue-400 mb-1">> Running tests...</div>`;
+            }, 800);
+
+            setTimeout(() => {
+                const success = Math.random() > 0.3;
+                if (success) {
+                    consoleOutput.innerHTML += `<div class="text-green-500 font-bold mt-2">VERDICT: ACCEPTED</div>`;
+                    consoleOutput.innerHTML += `<div class="text-gray-400">Runtime: 12ms | Memory: 5.4MB</div>`;
+                    consoleOutput.innerHTML += `<div class="text-brand text-xs mt-1">You beat 92% of submissions!</div>`;
+                } else {
+                    consoleOutput.innerHTML += `<div class="text-red-500 font-bold mt-2">VERDICT: WRONG ANSWER</div>`;
+                    consoleOutput.innerHTML += `<div class="text-gray-400">Input: [1,2], Expected: [3], Got: [0]</div>`;
+                }
+                // Auto scroll console
+                consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            }, 1800);
+        }
+
+        // Toast Notification Logic
+        const toastContainer = document.getElementById('toastContainer');
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+
+            // Colors based on type
+            let bgClass = 'bg-dark-700';
+            let textClass = 'text-white';
+            let borderClass = 'border-dark-600';
+
+            if (type === 'brand') { borderClass = 'border-brand'; textClass = 'text-brand'; }
+            if (type === 'success') { borderClass = 'border-green-500'; textClass = 'text-green-500'; }
+            if (type === 'error') { borderClass = 'border-red-500'; textClass = 'text-red-500'; }
+
+            toast.className = `px-4 py-3 rounded shadow-xl border ${borderClass} ${bgClass} flex items-center gap-3 animate-slide-up min-w-[200px]`;
+            toast.innerHTML = `
+                <span class="font-bold text-sm ${textClass}">${message}</span>
+            `;
+
+            toastContainer.appendChild(toast);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+    </script>
+</body>
+
+</html>

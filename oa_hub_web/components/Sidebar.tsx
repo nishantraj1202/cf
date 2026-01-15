@@ -2,34 +2,34 @@
 
 import React from "react";
 import Link from "next/link";
-import { Home, Flame, History, Code, Server, Database, Settings, Info } from "lucide-react";
+import { Home, Flame, History, ThumbsUp, Code, Server, Database, Terminal } from "lucide-react";
 
 export function Sidebar() {
     return (
-        <aside className="hidden lg:flex flex-col w-60 bg-dark-900 border-r border-dark-800 flex-shrink-0 overflow-y-auto h-[calc(100vh-64px)] py-6 px-3 sticky top-16">
+        <aside className="hidden lg:flex flex-col w-60 bg-dark-900 border-r border-dark-800 flex-shrink-0 overflow-y-auto custom-scroll py-6 px-3 sticky top-16 h-[calc(100vh-64px)]">
             <div className="space-y-1 mb-8">
-                <Link href="/" className="flex items-center gap-3 text-gray-400 hover:text-white hover:bg-dark-800 px-3 py-2 rounded transition-colors group">
-                    <Home className="w-5 h-5 group-hover:text-brand transition-colors" />
-                    <span className="font-medium">Home</span>
+                <Link href="/" className="flex items-center gap-3 px-3 py-2 text-sm font-bold bg-dark-800 text-white rounded hover:bg-dark-700 transition-colors border-l-2 border-brand">
+                    <Home className="w-4 h-4 text-brand" /> Home
                 </Link>
-
-                <div
-                    onClick={() => alert("We are working on this... Will be updated soon...")}
-                    className="flex items-center gap-3 text-gray-400 hover:text-white hover:bg-dark-800 px-3 py-2 rounded cursor-pointer transition-colors group"
-                >
-                    <Flame className="w-5 h-5 group-hover:text-brand transition-colors" />
-                    <span className="font-medium">Best of 2024</span>
-                </div>
+                {/* <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 rounded hover:bg-dark-800 hover:text-white transition-colors border-l-2 border-transparent">
+                    <Flame className="w-4 h-4" /> Trending Now
+                </a> */}
+                <Link href="/history" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 rounded hover:bg-dark-800 hover:text-white transition-colors border-l-2 border-transparent">
+                    <History className="w-4 h-4" /> Watch History
+                </Link>
+                <Link href="/liked" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 rounded hover:bg-dark-800 hover:text-white transition-colors border-l-2 border-transparent">
+                    <ThumbsUp className="w-4 h-4" /> Liked Code
+                </Link>
             </div>
 
-            {/* Categories Removed */}
 
-            {/* Bottom Links */}
-            <div className="mt-auto pt-6 border-t border-dark-800">
-                <Link href="/about" className="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-dark-800 rounded transition-colors group">
-                    <Info className="w-4 h-4 group-hover:text-brand transition-colors" />
-                    <span className="font-medium text-sm">About & Team</span>
-                </Link>
+
+            <div className="mt-8 px-3">
+                <div className="text-[10px] text-gray-500 leading-relaxed">
+                    &copy; 2026 CodinzHub<br />
+                    Terms • Privacy • Content Policy<br />
+                    <span className="text-dark-600">v2.4.0 (Stable)</span>
+                </div>
             </div>
         </aside>
     );
