@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { code, language } = body;
+        const { code, language: _language } = body;
 
         if (!code) {
             return NextResponse.json({ error: "No code provided" }, { status: 400 });
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
                 ]
             });
         }
-    } catch (error) {
+    } catch (_error) {
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

@@ -5,7 +5,7 @@ import { CodePlayer } from "@/components/CodePlayer";
 import { AuthorCard } from "@/components/AuthorCard";
 import { QuestionInteractions } from "@/components/QuestionInteractions";
 import { MobileQuestionLayout } from "@/components/MobileQuestionLayout";
-import { CheckCircle, Share2, ListPlus, MoreHorizontal } from "lucide-react";
+// No-op - CheckCircle removed
 import Link from "next/link";
 import { cn, API_URL } from "@/lib/utils";
 import { type Question } from "@/types";
@@ -24,7 +24,7 @@ async function getQuestion(slug: string): Promise<Question | null> {
         });
         if (!res.ok) return null;
         return res.json();
-    } catch (error) {
+    } catch (_error) {
         return null;
     }
 }

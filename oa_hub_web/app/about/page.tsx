@@ -1,7 +1,6 @@
 import React from "react";
-import Image from "next/image";
 import { Navbar } from "@/components/Navbar";
-import { Mail, Linkedin, Github, Globe } from "lucide-react";
+import { Mail, Linkedin, Github } from "lucide-react";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -40,12 +39,12 @@ export default function AboutPage() {
                                     Why I built this?
                                 </h2>
                                 <p className="text-gray-400 leading-relaxed">
-                                    Hello! I'm <strong>Amit Dayal</strong>, a Computer Science Engineer from <strong>NIT Jalandhar</strong>.
+                                    Hello! I&apos;m <strong>Amit Dayal</strong>, a Computer Science Engineer from <strong>NIT Jalandhar</strong>.
                                     Like many of you, I realized that existing platforms (LeetCode, GFG) are bloated with thousands of irrelevant questions.
                                 </p>
                                 <p className="text-gray-400 leading-relaxed">
                                     I built <strong>PrepTracker</strong> to solve a simple problem:
-                                    <em> "What are the exact questions companies like Uber, Google, and Amazon are asking RIGHT NOW?"</em>
+                                    <em> &quot;What are the exact questions companies like Uber, Google, and Amazon are asking RIGHT NOW?&quot;</em>
                                 </p>
                                 <p className="text-gray-400 leading-relaxed">
                                     Every question on this site is curated based on recent interview experiences. No junk, just high-ROI problems.

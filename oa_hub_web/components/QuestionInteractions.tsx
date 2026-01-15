@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Heart, History } from "lucide-react";
+import { Heart } from "lucide-react";
 import { type Question } from "@/types";
 import { cn } from "@/lib/utils";
 

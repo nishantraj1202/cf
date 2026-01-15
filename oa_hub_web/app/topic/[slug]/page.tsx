@@ -19,7 +19,7 @@ async function getQuestionsByTopic(topic: string): Promise<Question[]> {
         const res = await fetch(`${API_URL}/api/questions?topic=${topic}`, { cache: 'no-store' });
         if (!res.ok) return [];
         return res.json();
-    } catch (error) {
+    } catch (_error) {
         return [];
     }
 }

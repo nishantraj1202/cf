@@ -1,8 +1,7 @@
 import React from "react";
 import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
-import Link from "next/link";
-import { cn, API_URL } from "@/lib/utils";
+import { API_URL } from "@/lib/utils";
 import { CompanyList } from "@/components/CompanyList";
 import { Metadata } from "next";
 

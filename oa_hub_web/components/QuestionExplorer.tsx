@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { QuestionCard } from "@/components/QuestionCard";
 import { QuestionCardSkeleton } from "@/components/skeletons/QuestionCardSkeleton";
 import { type Question } from "@/types";
-import { SearchX, Filter, ListFilter, ChevronLeft, ChevronRight } from "lucide-react";
-import { cn, API_URL } from "@/lib/utils";
+import { SearchX, ListFilter, ChevronLeft, ChevronRight } from "lucide-react";
+import { API_URL } from "@/lib/utils";
 
 export function QuestionExplorer() {
     const [questions, setQuestions] = useState<Question[]>([]);
@@ -19,18 +19,13 @@ export function QuestionExplorer() {
     const ITEMS_PER_PAGE = 12;
 
     // Filter States
-    const [selectedCompany, setSelectedCompany] = useState<string>("All");
     const [selectedDifficulty, setSelectedDifficulty] = useState<string>("All");
     const [selectedTopic, setSelectedTopic] = useState<string>("All");
     const searchParams = useSearchParams();
     const initialSearch = searchParams.get("search") || "";
-    const [searchQuery, setSearchQuery] = useState<string>(initialSearch);
+    const [searchQuery] = useState<string>(initialSearch);
 
-    useEffect(() => {
-        fetchQuestions();
-    }, [currentPage, selectedCompany, selectedDifficulty, selectedTopic, searchQuery]);
-
-    const fetchQuestions = async () => {
+    const fetchQuestions = useCallback(async () => {
         setLoading(true);
         try {
             // Build Query Params
@@ -38,10 +33,9 @@ export function QuestionExplorer() {
             params.append("page", currentPage.toString());
             params.append("limit", ITEMS_PER_PAGE.toString());
 
-            if (selectedCompany !== "All") params.append("company", selectedCompany);
             if (selectedDifficulty !== "All") params.append("difficulty", selectedDifficulty);
             if (selectedTopic !== "All") params.append("topic", selectedTopic);
-            if (searchQuery) params.append("search", searchQuery); // Note: Backend might need update for generic search if not present
+            if (searchQuery) params.append("search", searchQuery);
 
             const res = await fetch(`${API_URL}/api/questions?${params.toString()}`);
             const data = await res.json();
@@ -64,12 +58,17 @@ export function QuestionExplorer() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [currentPage, selectedDifficulty, selectedTopic, searchQuery, ITEMS_PER_PAGE]);
+
+    useEffect(() => {
+        fetchQuestions();
+    }, [fetchQuestions]);
+
 
     // Reset page when filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [selectedCompany, selectedDifficulty, selectedTopic, searchQuery]);
+    }, [selectedDifficulty, selectedTopic, searchQuery]);
 
     const handlePageChange = (newPage: number) => {
         if (newPage >= 1 && newPage <= totalPages) {

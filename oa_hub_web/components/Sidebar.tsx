@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Home, Flame, History, ThumbsUp, Code, Server, Database, Terminal } from "lucide-react";
+import { Home, History, ThumbsUp } from "lucide-react";
 
 export function Sidebar() {
     return (

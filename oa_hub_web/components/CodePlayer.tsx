@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import Editor from "@monaco-editor/react";
-import { Play, Volume2, Settings, Maximize, X, Loader2, RefreshCw } from "lucide-react";
+import { Play, Volume2, Settings, Maximize, X, Loader2 } from "lucide-react";
 import { type Question } from "@/types";
 import { cn, API_URL } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
@@ -24,27 +24,7 @@ public:
     // }
 };`;
 
-const JS_TEMPLATE = `/**
- * @param {any[]} args
- * @return {any}
- */
-function solution(args) {
-    // Write your solution here
-    
-}`;
-
-const PYTHON_TEMPLATE = `class Solution:
-    def solution(self, args):
-        # Write your Python code here
-        pass
-`;
-
-const JAVA_TEMPLATE = `class Solution {
-    public void solution() {
-        // Write your Java code here
-    }
-}`;
-
+// Note: JS_TEMPLATE, PYTHON_TEMPLATE, JAVA_TEMPLATE removed - signatures are generated dynamically
 
 
 export function CodePlayer({ question }: CodePlayerProps) {
@@ -159,7 +139,7 @@ export function CodePlayer({ question }: CodePlayerProps) {
             } else {
                 setLogs(["> Error executing code.", JSON.stringify(data)]);
             }
-        } catch (error) {
+        } catch (_error) {
             setLogs(["> Server Connection Error"]);
         } finally {
             setIsRunning(false);

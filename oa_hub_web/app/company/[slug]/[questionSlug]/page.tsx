@@ -2,7 +2,6 @@ import React from "react";
 import { type Metadata } from "next";
 import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
-import { QuestionCard } from "@/components/QuestionCard";
 import { Briefcase } from "lucide-react";
 import Link from "next/link";
 import { type Question } from "@/types";
@@ -19,7 +18,7 @@ async function getQuestion(slug: string): Promise<Question | null> {
         });
         if (!res.ok) return null;
         return res.json();
-    } catch (error) {
+    } catch (_error) {
         return null;
     }
 }
@@ -73,13 +72,13 @@ export default async function CompanyQuestionPage({ params }: PageProps) {
                         <p className="text-gray-300 text-lg leading-relaxed mb-8">
                             This is a verified interview question from <strong>{companyName}</strong>.
                             Candidates reporting seeing this problem in recent Online Assessments (OAs) and onsite rounds.
-                            Mastering "{question.title}" covers key patterns like <strong>{question.topic}</strong>.
+                            Mastering &quot;{question.title}&quot; covers key patterns like <strong>{question.topic}</strong>.
                         </p>
 
                         <div className="bg-dark-950 rounded-xl p-6 mb-8 border border-dark-800">
                             <h3 className="font-bold text-gray-400 text-sm uppercase mb-3">Problem Preview</h3>
                             <p className="text-gray-500 line-clamp-3 italic">
-                                "{question.desc}"
+                                &quot;{question.desc}&quot;
                             </p>
                         </div>
 

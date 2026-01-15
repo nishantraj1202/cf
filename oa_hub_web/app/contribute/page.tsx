@@ -2,15 +2,13 @@
 
 import React, { useState } from "react";
 import { Navbar } from "@/components/Navbar";
-import { CodePlayer } from "@/components/CodePlayer";
 import { Upload, FileText, ArrowRight, Loader2, ArrowLeft, CheckCircle } from "lucide-react";
-import { cn, API_URL } from "@/lib/utils";
+import { API_URL } from "@/lib/utils";
 
 export default function ContributePage() {
     const [step, setStep] = useState<"select" | "input" | "preview" | "success">("select");
     const [mode, setMode] = useState<"image" | "manual" | null>(null);
     const [loading, setLoading] = useState(false);
-    const [previewData, setPreviewData] = useState<any>(null);
 
     // Form States
     const [imgPreviews, setImgPreviews] = useState<string[]>([]);
@@ -127,7 +125,7 @@ export default function ContributePage() {
         setLoading(true);
 
         let parsedTestCases = [];
-        try { parsedTestCases = JSON.parse(manualForm.testCases); } catch (e) { }
+        try { parsedTestCases = JSON.parse(manualForm.testCases); } catch (_e) { }
 
         const finalData = {
             ...manualForm,
@@ -211,7 +209,7 @@ export default function ContributePage() {
                             <div className="space-y-6">
                                 <div>
                                     <h2 className="text-2xl font-bold text-white mb-1">Upload Scene Screenshots</h2>
-                                    <p className="text-gray-400 text-sm">We'll scan the first image for content. Add as many scenes as you like.</p>
+                                    <p className="text-gray-400 text-sm">We&apos;ll scan the first image for content. Add as many scenes as you like.</p>
                                 </div>
 
                                 <div className="space-y-4">

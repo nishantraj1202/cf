@@ -2,18 +2,24 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Search, Upload, X, Menu, Flame, User, Loader2 } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Search, Upload, X, Menu, Loader2 } from "lucide-react";
 import { API_URL, cn } from "@/lib/utils";
+
+interface Suggestion {
+    slug?: string;
+    titleSlug?: string;
+    title?: string;
+    name?: string;
+}
 
 export function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
 
     // Search State
     const pathname = usePathname();
-    const router = useRouter();
     const [query, setQuery] = useState("");
-    const [suggestions, setSuggestions] = useState<any[]>([]);
+    const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);

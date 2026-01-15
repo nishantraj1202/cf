@@ -29,7 +29,6 @@ export default function AdminPage() {
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
     const [adminKey, setAdminKey] = useState("");
-    const [deletedImages, setDeletedImages] = useState<string[]>([]);
 
     // --- Crop State ---
     const [imageToCrop, setImageToCrop] = useState<string | null>(null);
@@ -288,7 +287,7 @@ export default function AdminPage() {
             let parsedTestCases = [];
             try {
                 parsedTestCases = JSON.parse(formData.testCases);
-            } catch (err) {
+            } catch (_err) {
                 alert("Invalid JSON in Test Cases");
                 setLoading(false);
                 return;
@@ -452,7 +451,6 @@ export default function AdminPage() {
                                                 type="button"
                                                 onClick={() => {
                                                     setImagePreviews([]);
-                                                    setDeletedImages(prev => [...prev, ...imagePreviews]);
                                                 }}
                                                 className="text-red-400 text-xs hover:text-red-300 underline"
                                             >
@@ -466,8 +464,6 @@ export default function AdminPage() {
                                                     <button
                                                         type="button"
                                                         onClick={() => {
-                                                            const toDelete = imagePreviews[i];
-                                                            setDeletedImages(prev => [...prev, toDelete]);
                                                             const newImages = [...imagePreviews];
                                                             newImages.splice(i, 1);
                                                             setImagePreviews(newImages);

@@ -18,7 +18,7 @@ async function getQuestion(id: string): Promise<Question | null> {
         });
         if (!res.ok) return null;
         return res.json();
-    } catch (error) {
+    } catch (_error) {
         return null;
     }
 }

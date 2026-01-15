@@ -19,7 +19,7 @@ async function getQuestionsByDifficulty(difficulty: string): Promise<Question[]>
         const res = await fetch(`${API_URL}/api/questions?difficulty=${difficulty}`, { cache: 'no-store' });
         if (!res.ok) return [];
         return res.json();
-    } catch (error) {
+    } catch (_error) {
         return [];
     }
 }
