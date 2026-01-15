@@ -8,6 +8,8 @@ import Link from "next/link";
 import { type Question } from "@/types";
 import { API_URL } from "@/lib/utils";
 
+export const dynamic = 'force-dynamic';
+
 interface PageProps {
     params: Promise<{ slug: string }>;
 }

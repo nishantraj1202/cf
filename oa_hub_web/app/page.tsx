@@ -14,6 +14,8 @@ export const metadata: Metadata = {
   description: "The ultimate guide to cracking online assessments. Practice real questions from top companies.",
 };
 
+export const dynamic = 'force-dynamic';
+
 async function getRecentQuestions() {
   try {
     const res = await fetch(`${API_URL}/api/questions?limit=8`, { cache: 'no-store' });

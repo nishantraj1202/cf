@@ -11,6 +11,8 @@ export const metadata: Metadata = {
     description: "Browse companies and their latest interview questions.",
 };
 
+export const dynamic = 'force-dynamic';
+
 interface Company {
     _id: string;
     name: string;
