@@ -6,36 +6,35 @@ import { X, Volume2 } from "lucide-react";
 export function IntroVideo() {
     const [isVisible, setIsVisible] = useState(true);
     const [canSkip, setCanSkip] = useState(false);
-    const [isMuted, setIsMuted] = useState(false);
     const videoRef = React.useRef<HTMLVideoElement>(null);
 
+    const [showPlayButton, setShowPlayButton] = useState(false);
+
     useEffect(() => {
-        const video = videoRef.current;
-        if (video) {
-            // Attempt to play with sound
-            video.muted = false;
-            video.volume = 1.0;
-
-            const playPromise = video.play();
-            if (playPromise !== undefined) {
-                playPromise.catch((error) => {
-                    console.log("Autoplay with sound prevented, falling back to muted:", error);
-                    // Fallback: Play muted
-                    if (video) {
-                        video.muted = true;
-                        setIsMuted(true);
-                        video.play();
-                    }
-                });
-            }
-        }
-
         // Check if we've already shown the intro in this session
         const hasSeenIntro = sessionStorage.getItem("hasSeenIntro");
         if (hasSeenIntro) {
             setIsVisible(false);
             return;
         }
+
+        const playVideo = async () => {
+            const video = videoRef.current;
+            if (video) {
+                try {
+                    // Try to play with sound
+                    video.muted = false;
+                    video.volume = 1.0;
+                    await video.play();
+                } catch (error) {
+                    console.log("Autoplay prevented:", error);
+                    // If blocked, show manual play button
+                    setShowPlayButton(true);
+                }
+            }
+        };
+
+        playVideo();
 
         // Allow skipping after 2 seconds
         const skipTimer = setTimeout(() => setCanSkip(true), 2000);
@@ -45,28 +44,25 @@ export function IntroVideo() {
         };
     }, []);
 
+    const handleManualPlay = () => {
+        if (videoRef.current) {
+            videoRef.current.muted = false;
+            videoRef.current.volume = 1.0;
+            videoRef.current.play();
+            setShowPlayButton(false);
+        }
+    };
+
     const handleClose = (e: React.MouseEvent) => {
         e.stopPropagation();
         setIsVisible(false);
         sessionStorage.setItem("hasSeenIntro", "true");
     };
 
-    const handleUnmute = () => {
-        if (videoRef.current) {
-            videoRef.current.muted = false;
-            videoRef.current.volume = 1.0;
-            setIsMuted(false);
-            videoRef.current.play();
-        }
-    };
-
     if (!isVisible) return null;
 
     return (
-        <div
-            className="fixed inset-0 z-[100] bg-black flex items-center justify-center cursor-pointer"
-            onClick={handleUnmute}
-        >
+        <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center">
             {/* Video Container */}
             <div className="relative w-screen h-screen bg-black flex items-center justify-center">
                 <video
@@ -78,11 +74,18 @@ export function IntroVideo() {
                     <source src="/intro_hc.mp4" type="video/mp4" />
                 </video>
 
-                {/* Click for Sound Indicator */}
-                {isMuted && (
-                    <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full flex items-center gap-2 animate-pulse">
-                        <Volume2 className="w-5 h-5" />
-                        <span className="text-sm font-medium">Click anywhere for sound</span>
+                {/* Manual Play Button Overlay */}
+                {showPlayButton && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-20">
+                        <button
+                            onClick={handleManualPlay}
+                            className="group flex flex-col items-center gap-4 transition-transform hover:scale-105"
+                        >
+                            <div className="w-20 h-20 rounded-full bg-brand flex items-center justify-center shadow-[0_0_30px_rgba(255,153,0,0.5)] group-hover:shadow-[0_0_50px_rgba(255,153,0,0.8)] transition-shadow">
+                                <Volume2 className="w-10 h-10 text-black fill-black" />
+                            </div>
+                            <span className="text-white font-bold text-lg tracking-widest uppercase">Click to Start</span>
+                        </button>
                     </div>
                 )}
 
