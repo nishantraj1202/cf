@@ -30,6 +30,10 @@ export default function AdminPage() {
     const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
     const [adminKey, setAdminKey] = useState("");
 
+    // --- Device Lock State ---
+    const [requiresDeviceAuth, setRequiresDeviceAuth] = useState(false);
+    const [deviceCode, setDeviceCode] = useState("");
+
     // --- Crop State ---
     const [imageToCrop, setImageToCrop] = useState<string | null>(null);
     const [cropIndex, setCropIndex] = useState<number | null>(null);
@@ -47,23 +51,62 @@ export default function AdminPage() {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setAuthError(false);
         try {
-            // Verify with Backend
+            // First pass: Try Basic Auth (Will fail with 403 if device not verified)
             const res = await fetch(`${API_URL}/api/admin/questions`, {
                 headers: { 'x-admin-secret': passwordInput }
             });
 
-            if (res.ok || res.status === 200) {
+            if (res.ok) {
+                // Already authorized (maybe cookie existed)
                 setIsAuthenticated(true);
-                setAuthError(false);
                 setAdminKey(passwordInput);
                 saveKey(passwordInput);
+            } else if (res.status === 403) {
+                // Key is correct, but device is not
+                const data = await res.json();
+                if (data.requiresDeviceAuth) {
+                    setRequiresDeviceAuth(true); // Show Device Code Input
+                } else {
+                    setAuthError(true);
+                }
             } else {
-                setAuthError(true);
+                setAuthError(true); // 401 or other
             }
         } catch (err) {
             console.error("Auth verification failed", err);
             setAuthError(true);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeviceVerify = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            const res = await fetch(`${API_URL}/api/admin/verify-device`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    secret: passwordInput,
+                    deviceCode: deviceCode
+                })
+            });
+
+            if (res.ok) {
+                // Success! Cookie is set. Now we can proceed.
+                setIsAuthenticated(true);
+                setAdminKey(passwordInput);
+                saveKey(passwordInput);
+                setRequiresDeviceAuth(false);
+            } else {
+                alert("Invalid Device Code");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Verification Failed");
         } finally {
             setLoading(false);
         }
@@ -350,28 +393,50 @@ export default function AdminPage() {
                             <h1 className="text-2xl font-bold text-white">Admin Access</h1>
                             <p className="text-gray-400 text-sm mt-2">Enter the secret key to continue</p>
                         </div>
-                        <form onSubmit={handleLogin} className="space-y-4">
-                            <div>
-                                <input
-                                    type="password"
-                                    value={passwordInput}
-                                    onChange={(e) => {
-                                        setPasswordInput(e.target.value);
-                                        setAuthError(false); // Clear error on input change
-                                    }}
-                                    placeholder="Secret Key"
-                                    className="w-full bg-black border border-dark-700 rounded px-4 py-3 text-white focus:border-brand focus:outline-none transition-colors"
-                                    autoFocus
-                                />
-                            </div>
+                        <form onSubmit={requiresDeviceAuth ? handleDeviceVerify : handleLogin} className="space-y-4">
+                            {!requiresDeviceAuth ? (
+                                <div>
+                                    <input
+                                        type="password"
+                                        value={passwordInput}
+                                        onChange={(e) => {
+                                            setPasswordInput(e.target.value);
+                                            setAuthError(false);
+                                        }}
+                                        placeholder="Secret Key"
+                                        className="w-full bg-black border border-dark-700 rounded px-4 py-3 text-white focus:border-brand focus:outline-none transition-colors"
+                                        autoFocus
+                                    />
+                                </div>
+                            ) : (
+                                <div>
+                                    <div className="bg-blue-500/10 text-blue-400 p-3 rounded text-sm mb-3">
+                                        Device Verification Required. <br />
+                                        Enter the specific <strong>Device Code</strong> (not the secret key).
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={deviceCode}
+                                        onChange={(e) => setDeviceCode(e.target.value)}
+                                        placeholder="Device Code (e.g. 123456)"
+                                        className="w-full bg-black border border-blue-700/50 rounded px-4 py-3 text-white focus:border-blue-500 focus:outline-none transition-colors"
+                                        autoFocus
+                                    />
+                                </div>
+                            )}
+
                             {authError && (
                                 <p className="text-red-500 text-sm text-center">Invalid secret key</p>
                             )}
                             <button
                                 type="submit"
-                                className="w-full bg-brand hover:bg-yellow-500 text-black font-bold py-3 rounded transition-colors"
+                                disabled={loading}
+                                className={cn(
+                                    "w-full font-bold py-3 rounded transition-colors disabled:opacity-50",
+                                    requiresDeviceAuth ? "bg-blue-600 hover:bg-blue-500 text-white" : "bg-brand hover:bg-yellow-500 text-black"
+                                )}
                             >
-                                Unlock Panel
+                                {loading ? "Verifying..." : (requiresDeviceAuth ? "Verify Device" : "Unlock Panel")}
                             </button>
                         </form>
                     </div>

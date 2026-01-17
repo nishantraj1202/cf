@@ -3,6 +3,7 @@ import React from "react";
 import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
 import { IntroVideo } from "@/components/IntroVideo";
+import { FAQ } from "@/components/FAQ";
 import Link from "next/link";
 import { Play, CheckCircle, SearchX } from "lucide-react";
 import { type Metadata } from "next";
@@ -157,7 +158,7 @@ export default async function Home() {
             )}
 
             {/* Explore More Button */}
-            <div className="mt-12 flex justify-center">
+            <div className="mt-12 flex justify-center mb-16">
               <Link
                 href="/questions"
                 className="px-8 py-3 bg-dark-800 hover:bg-dark-700 text-white font-bold rounded-full border border-dark-700 transition-all flex items-center gap-2"
@@ -165,6 +166,8 @@ export default async function Home() {
                 Explore More Problems
               </Link>
             </div>
+
+            <FAQ />
 
           </div>
         </main>

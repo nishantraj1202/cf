@@ -8,9 +8,9 @@ import { API_URL, cn } from "@/lib/utils";
 
 interface Suggestion {
     slug?: string;
-    titleSlug?: string;
     title?: string;
     name?: string;
+    type?: 'company' | 'question';
 }
 
 export function Navbar() {
@@ -24,8 +24,7 @@ export function Navbar() {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
 
-    const isCompanyContext = pathname?.startsWith("/companies");
-    const placeholder = isCompanyContext ? "Search companies..." : "Search videos... just kidding, Questions";
+    const placeholder = "Search companies or questions...";
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -42,15 +41,9 @@ export function Navbar() {
             if (query.trim().length > 1) {
                 setIsLoading(true);
                 try {
-                    const endpoint = isCompanyContext ? "/api/companies" : "/api/questions";
-                    const res = await fetch(`${API_URL}${endpoint}?search=${encodeURIComponent(query)}&limit=5`);
+                    const res = await fetch(`${API_URL}/api/search?search=${encodeURIComponent(query)}&limit=5`);
                     const data = await res.json();
-
-                    if (isCompanyContext) {
-                        setSuggestions(Array.isArray(data) ? data.slice(0, 5) : []);
-                    } else {
-                        setSuggestions(data.questions ? data.questions.slice(0, 5) : []);
-                    }
+                    setSuggestions(Array.isArray(data) ? data : []);
                     setShowSuggestions(true);
                 } catch (error) {
                     console.error("Search error:", error);
@@ -65,35 +58,26 @@ export function Navbar() {
         }, 300);
 
         return () => clearTimeout(delayDebounceFn);
-    }, [query, isCompanyContext]);
+    }, [query]);
 
     const handleSearchSubmit = (e?: React.KeyboardEvent) => {
         if (e && e.key !== "Enter") return;
 
         if (query.trim()) {
             setShowSuggestions(false);
-            if (isCompanyContext) {
-                // For companies, we might just filter the list or go to the first result? 
-                // User said "in company section it should only search company". 
-                // Since we have a client-side filter on /companies, maybe we redirect there?
-                // But we are ALREADY there or on a detail page.
-                // Let's redirect to /companies?search=query OR just let the client side handle it if on /companies?
-                // Simpler: Redirect to valid search page.
-                // Actually, the CompanyList supports filtering. 
-                // IF we are on /companies, we could just let the local state handle it? 
-                // No, standard nav search usually redirects.
-                // Let's assume generic search redirect for now.
-                // But wait, the user removed the search bar FROM question page, but for companies, they specifically wanted a "right section" search bar.
-                // Does the Navbar Company search duplicate the one we just built?
-                // The user requested: "in company section it should only search company not questions".
-                // And "shift this in right section instead of here" referred to the LOCAL search bar.
-                // So we have TWO search bars in Companies section now? One in Navbar, one in Page.
-                // Usually Navbar search is global. If I make Navbar search context aware, it overrides the need for a page-specific search bar?
-                // NO, the user ASKED to move the page specific search bar to the right. 
-                // So likely both exist.
-                // Nav Search -> Quick Jump. Page Search -> Filter list.
-                window.location.href = isCompanyContext ? `/companies?search=${query}` : `/questions?search=${query}`;
+
+            // Check for exact match in suggestions to auto-navigate
+            const exactMatch = suggestions.find(s => s.title?.toLowerCase() === query.toLowerCase());
+
+            if (exactMatch) {
+                if (exactMatch.type === 'company') {
+                    window.location.href = `/company/${exactMatch.slug}`;
+                } else {
+                    window.location.href = `/question/${exactMatch.slug}`; // Assuming questions have slugs
+                }
             } else {
+                // Default fallback: Search Questions Page (or Companies if it looks like a company?)
+                // For now, default to questions search as it handles title/company text search
                 window.location.href = `/questions?search=${query}`;
             }
         }
@@ -154,13 +138,18 @@ export function Navbar() {
                             {suggestions.map((item, idx) => (
                                 <Link
                                     key={idx}
-                                    href={isCompanyContext ? `/company/${item.slug}` : `/question/${item.titleSlug || item.slug}`} // Assuming question has slug/titleSlug
+                                    href={item.type === 'company' ? `/company/${item.slug}` : `/question/${item.slug}`}
                                     className="block px-4 py-3 hover:bg-dark-700 transition-colors border-b border-dark-700/50 last:border-0"
                                     onClick={() => setShowSuggestions(false)}
                                 >
                                     <div className="flex items-center justify-between">
-                                        <span className="text-white text-sm font-medium">{item.title || item.name}</span>
-                                        <span className="text-xs text-gray-500 uppercase tracking-wider">{isCompanyContext ? "Company" : "Question"}</span>
+                                        <span className="text-white text-sm font-medium">{item.title}</span>
+                                        <span className={cn(
+                                            "text-[10px] font-bold px-1.5 py-0.5 rounded uppercase",
+                                            item.type === 'company' ? "bg-blue-900/50 text-blue-300" : "bg-brand/20 text-brand"
+                                        )}>
+                                            {item.type === 'company' ? "Company" : "Question"}
+                                        </span>
                                     </div>
                                 </Link>
                             ))}
