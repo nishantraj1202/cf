@@ -636,6 +636,17 @@ app.get('/api/questions/:id', async (req, res) => {
     }
 });
 
+// 4b. Get All Pending Questions (Admin Review)
+app.get('/api/admin/questions', checkAdmin, async (req, res) => {
+    try {
+        const questions = await Question.find({ status: 'pending' }).sort({ date: -1 });
+        res.json(questions);
+    } catch (err) {
+        console.error("Error fetching pending questions:", err);
+        res.status(500).json({ error: 'Server Error' });
+    }
+});
+
 // 4a. Get Single Question (Admin/Preview - Any Status)
 app.get('/api/admin/questions/:id', async (req, res) => {
     try {

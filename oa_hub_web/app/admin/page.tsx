@@ -339,7 +339,7 @@ export default function AdminPage() {
             const payload = {
                 ...formData,
                 testCases: parsedTestCases,
-                status: 'approved' // AUTO-APPROVE Admin Submissions
+                status: 'pending' // Send to Review Queue
             };
 
             let url = `${API_URL}/api/questions`;
