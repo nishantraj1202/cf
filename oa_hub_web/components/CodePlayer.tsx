@@ -655,7 +655,7 @@ export function CodePlayer({ question }: CodePlayerProps) {
                                 <h3 className="text-xl font-bold text-white">Execution Server Updating</h3>
 
                                 <p className="text-gray-400 text-sm leading-relaxed">
-                                    Our code execution engine runs on isolated Docker containers which are currently being migrated to a high-performance Oracle server cluster.
+                                    Stay Tuned Honey ...
                                 </p>
 
                                 <div className="bg-[#262626] rounded-md p-3 w-full border border-white/5">
@@ -666,9 +666,9 @@ export function CodePlayer({ question }: CodePlayerProps) {
                                     </p>
                                 </div>
 
-                                <p className="text-gray-500 text-xs text-center px-4">
+                                {/* <p className="text-gray-500 text-xs text-center px-4">
                                     This feature requires Docker support which is temporarily paused on this demo instance.
-                                </p>
+                                </p> */}
 
                                 <button
                                     onClick={() => setShowUpdatePopup(false)}
