@@ -87,6 +87,15 @@ function runCode(language, code, input) {
                 };
 
                 if (err) {
+                    const errorMsg = (err.message || "") + (stderr || "");
+                    if (errorMsg.includes("docker: not found") ||
+                        errorMsg.includes("'docker' is not recognized") ||
+                        errorMsg.includes("Is the docker daemon running") ||
+                        errorMsg.includes("docker: command not found")) {
+                        cleanup();
+                        return reject(new Error("DockerUnavailable"));
+                    }
+
                     if (err.killed) {
                         result.status = "TLE";
                         result.stderr += "\nTime Limit Exceeded";

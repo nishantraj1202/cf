@@ -1669,6 +1669,9 @@ ${userCode}
 
     } catch (error) {
         console.error("Execution API Error:", error);
+        if (error.message === "DockerUnavailable") {
+            return res.json({ status: "execution_unavailable", logs: ["> Execution environment unavailable (Render/Docker missing)."] });
+        }
         return res.json({ status: "error", logs: ["> Internal Server Error"] });
     }
 });

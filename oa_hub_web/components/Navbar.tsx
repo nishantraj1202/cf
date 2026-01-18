@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Search, Upload, X, Menu, Loader2 } from "lucide-react";
 import { API_URL, cn } from "@/lib/utils";
 
@@ -15,9 +15,11 @@ interface Suggestion {
 
 export function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
+    const [showPremiumPopup, setShowPremiumPopup] = useState(false);
 
     // Search State
     const pathname = usePathname();
+    const router = useRouter();
     const [query, setQuery] = useState("");
     const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -71,14 +73,14 @@ export function Navbar() {
 
             if (exactMatch) {
                 if (exactMatch.type === 'company') {
-                    window.location.href = `/company/${exactMatch.slug}`;
+                    router.push(`/company/${exactMatch.slug}`);
                 } else {
-                    window.location.href = `/question/${exactMatch.slug}`; // Assuming questions have slugs
+                    router.push(`/question/${exactMatch.slug}`); // Assuming questions have slugs
                 }
             } else {
                 // Default fallback: Search Questions Page (or Companies if it looks like a company?)
                 // For now, default to questions search as it handles title/company text search
-                window.location.href = `/questions?search=${query}`;
+                router.push(`/questions?search=${query}`);
             }
         }
     };
@@ -160,15 +162,9 @@ export function Navbar() {
 
             {/* Header Actions */}
             <div className="flex items-center gap-4">
+
                 <button
-                    onClick={() => alert("Upload feature coming soon!")}
-                    className="hidden sm:flex items-center gap-2 text-gray-300 hover:text-white text-sm font-medium"
-                >
-                    <Upload className="w-4 h-4" />
-                    Upload
-                </button>
-                <button
-                    onClick={() => alert("Go Premium for 4K coding resolution!")}
+                    onClick={() => setShowPremiumPopup(true)}
                     className="hidden sm:flex items-center gap-2 border border-brand text-brand hover:bg-brand hover:text-black px-3 py-1 rounded text-sm font-bold uppercase transition-all duration-200 shadow-[0_0_10px_rgba(255,153,0,0.2)]"
                 >
                     Premium
@@ -200,9 +196,50 @@ export function Navbar() {
                     <Link href="/contribute" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-brand py-2 border-b border-dark-800">
                         Contribute
                     </Link>
-                    <button className="text-left text-brand font-bold py-2">
+                    <button onClick={() => { setIsOpen(false); setShowPremiumPopup(true); }} className="text-left text-brand font-bold py-2">
                         Premium
                     </button>
+                </div>
+            )}
+
+            {/* Premium Update Popup */}
+            {showPremiumPopup && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-[#1e1e1e] border border-dark-600 rounded-lg p-6 max-w-md w-full shadow-2xl relative transform transition-all scale-100 animate-in zoom-in-95 duration-200">
+                        <button
+                            onClick={() => setShowPremiumPopup(false)}
+                            className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+
+                        <div className="flex flex-col items-center text-center space-y-4">
+                            <div className="w-16 h-16 bg-brand/10 rounded-full flex items-center justify-center mb-2">
+                                <Loader2 className="w-8 h-8 text-brand animate-spin" />
+                            </div>
+
+                            <h3 className="text-xl font-bold text-white">Premium Features Coming Soon</h3>
+
+                            <p className="text-gray-400 text-sm leading-relaxed">
+                                We are currently upgrading our payment infrastructure to support global transactions. Premium features including 4K video solutions and cloud environments will be available shortly.
+                            </p>
+
+                            <div className="bg-[#262626] rounded-md p-3 w-full border border-white/5">
+                                <p className="text-xs font-mono text-brand">
+                                    Status: Implementation in Progress
+                                    <br />
+                                    ETA: Next Release
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={() => setShowPremiumPopup(false)}
+                                className="mt-2 w-full py-2.5 bg-brand hover:bg-brand/90 text-white font-bold rounded-md transition-all text-sm"
+                            >
+                                Got it
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </header>

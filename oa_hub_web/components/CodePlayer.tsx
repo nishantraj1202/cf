@@ -41,6 +41,7 @@ export function CodePlayer({ question }: CodePlayerProps) {
     const [isConsoleDragging, setIsConsoleDragging] = useState(false);
     const consoleRef = useRef<HTMLDivElement>(null);
     const consolePanelRef = useRef<HTMLDivElement>(null);
+    const [showUpdatePopup, setShowUpdatePopup] = useState(false);
 
     // Handle console (vertical) resize drag
     useEffect(() => {
@@ -133,6 +134,16 @@ export function CodePlayer({ question }: CodePlayerProps) {
             });
 
             const data = await response.json();
+
+
+
+            // Handle Environment Unavailable (Render/No Docker)
+            if (data.status === 'execution_unavailable') {
+                setShowUpdatePopup(true);
+                setConsoleOpen(false);
+                setIsRunning(false);
+                return;
+            }
 
             if (data.logs) {
                 setLogs(data.logs);
@@ -622,6 +633,54 @@ export function CodePlayer({ question }: CodePlayerProps) {
                     </button>
                 </div>
             </div>
+
+
+            {/* Environment Unavailable Popup */}
+            {
+                showUpdatePopup && (
+                    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                        <div className="bg-[#1e1e1e] border border-dark-600 rounded-lg p-6 max-w-md w-full shadow-2xl relative transform transition-all scale-100 animate-in zoom-in-95 duration-200">
+                            <button
+                                onClick={() => setShowUpdatePopup(false)}
+                                className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+
+                            <div className="flex flex-col items-center text-center space-y-4">
+                                <div className="w-16 h-16 bg-brand/10 rounded-full flex items-center justify-center mb-2">
+                                    <Loader2 className="w-8 h-8 text-brand animate-spin" />
+                                </div>
+
+                                <h3 className="text-xl font-bold text-white">Execution Server Updating</h3>
+
+                                <p className="text-gray-400 text-sm leading-relaxed">
+                                    Our code execution engine runs on isolated Docker containers which are currently being migrated to a high-performance Oracle server cluster.
+                                </p>
+
+                                <div className="bg-[#262626] rounded-md p-3 w-full border border-white/5">
+                                    <p className="text-xs font-mono text-brand">
+                                        Status: Upgrade in Progress
+                                        <br />
+                                        Availability: Coming Soon
+                                    </p>
+                                </div>
+
+                                <p className="text-gray-500 text-xs text-center px-4">
+                                    This feature requires Docker support which is temporarily paused on this demo instance.
+                                </p>
+
+                                <button
+                                    onClick={() => setShowUpdatePopup(false)}
+                                    className="mt-2 w-full py-2.5 bg-brand hover:bg-brand/90 text-white font-bold rounded-md transition-all text-sm"
+                                >
+                                    Got it
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
         </div >
     );
 }
