@@ -41,18 +41,34 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         };
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://preptracker.example.com';
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://preptracker.com';
+    const cleanDesc = question.desc?.replace(/[#*`]/g, '').substring(0, 150) || '';
 
     return {
         title: `${question.title} - ${question.company} Interview Question`,
-        description: `Practice ${question.title} from ${question.company}. ${question.desc.substring(0, 150)}...`,
+        description: `Practice ${question.title} from ${question.company}. ${cleanDesc}...`,
+        keywords: [
+            question.company,
+            question.topic,
+            question.difficulty,
+            'coding interview',
+            'online assessment',
+            ...(question.tags || []),
+        ].filter(Boolean),
         openGraph: {
-            title: `${question.title} | PrepTracker`,
-            description: `Solve ${question.title} online. Real interview question from ${question.company}.`,
+            title: `${question.title} | ${question.company} Interview`,
+            description: `Solve ${question.title} online. Real interview question from ${question.company}. Difficulty: ${question.difficulty}.`,
+            url: `${baseUrl}/question/${slug}`,
+            type: 'article',
+        },
+        twitter: {
+            card: 'summary',
+            title: `${question.title} - ${question.company}`,
+            description: `${question.difficulty} level question from ${question.company}`,
         },
         alternates: {
             canonical: `${baseUrl}/question/${slug}`,
-        }
+        },
     };
 }
 

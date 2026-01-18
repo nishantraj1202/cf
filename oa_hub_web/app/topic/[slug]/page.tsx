@@ -10,6 +10,8 @@ import { API_URL } from "@/lib/utils";
 
 export const dynamic = 'force-dynamic';
 
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://preptracker.com';
+
 interface PageProps {
     params: Promise<{ slug: string }>;
 }
@@ -30,12 +32,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const topicName = slug.charAt(0).toUpperCase() + slug.slice(1);
 
     return {
-        title: `Top ${topicName} Interview Questions (2025) | PrepTracker`,
+        title: `Top ${topicName} Interview Questions (2025)`,
         description: `Master ${topicName} data structures and algorithms with our curated list of real interview questions from top tech companies.`,
         openGraph: {
             title: `${topicName} Interview Questions | PrepTracker`,
             description: `Best ${topicName} problems for coding interviews.`,
-        }
+            url: `${BASE_URL}/topic/${slug}`,
+        },
+        twitter: {
+            card: 'summary',
+            title: `${topicName} Interview Questions`,
+            description: `Master ${topicName} with real interview questions.`,
+        },
+        alternates: {
+            canonical: `${BASE_URL}/topic/${slug}`,
+        },
     };
 }
 

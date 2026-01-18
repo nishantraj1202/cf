@@ -10,9 +10,19 @@ import { type Metadata } from "next";
 import { API_URL, cn } from "@/lib/utils";
 import { type Question } from "@/types";
 
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://preptracker.com';
+
 export const metadata: Metadata = {
-  title: "CodinzHub - Premium Coding Interview Prep",
-  description: "The ultimate guide to cracking online assessments. Practice real questions from top companies.",
+  title: "Home - Premium Coding Interview Prep",
+  description: "The ultimate guide to cracking online assessments. Practice real OA questions from Google, Meta, Amazon, and 50+ top tech companies. Start your interview prep today!",
+  openGraph: {
+    title: "PrepTracker - Master Your Coding Interviews",
+    description: "Practice real OA questions from top tech companies. Join thousands of developers preparing for their dream jobs.",
+    url: BASE_URL,
+  },
+  alternates: {
+    canonical: BASE_URL,
+  },
 };
 
 export const dynamic = 'force-dynamic';
@@ -37,8 +47,55 @@ async function getRecentQuestions() {
 export default async function Home() {
   const recentQuestions = await getRecentQuestions();
 
+  // JSON-LD Structured Data for the website
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "PrepTracker",
+    "url": BASE_URL,
+    "description": "The ultimate platform for tracking and practicing Online Assessments and coding interview questions.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": `${BASE_URL}/questions?search={search_term_string}`,
+      "query-input": "required name=search_term_string"
+    }
+  };
+
+  // JSON-LD for the item list (questions collection)
+  const itemListJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Top Coding Interview Questions",
+    "description": "Recently uploaded interview questions from top tech companies",
+    "numberOfItems": recentQuestions.length,
+    "itemListElement": recentQuestions.slice(0, 8).map((q: Question, index: number) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "item": {
+        "@type": "Course",
+        "name": q.title,
+        "description": q.desc?.substring(0, 150) || "",
+        "provider": {
+          "@type": "Organization",
+          "name": q.company
+        },
+        "url": `${BASE_URL}/question/${q.slug || q.id}`
+      }
+    }))
+  };
+
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-dark-950 text-gray-200">
+      {/* Inject JSON-LD structured data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+      />
+
       <Navbar />
       <div className="flex-1 flex overflow-hidden">
         <Sidebar />

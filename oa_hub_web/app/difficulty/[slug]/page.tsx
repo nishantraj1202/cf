@@ -10,6 +10,8 @@ import { API_URL } from "@/lib/utils";
 
 export const dynamic = 'force-dynamic';
 
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://preptracker.com';
+
 interface PageProps {
     params: Promise<{ slug: string }>;
 }
@@ -29,8 +31,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const difficultyName = slug.charAt(0).toUpperCase() + slug.slice(1);
 
     return {
-        title: `${difficultyName} Coding Interview Questions | PrepTracker`,
+        title: `${difficultyName} Coding Interview Questions`,
         description: `Practice ${difficultyName}-level coding interview questions. Perfect for ${difficultyName === 'Easy' ? 'beginners' : difficultyName === 'Medium' ? 'intermediate practice' : 'advanced prep'}.`,
+        openGraph: {
+            title: `${difficultyName} Interview Questions | PrepTracker`,
+            description: `${difficultyName}-level coding problems for interview prep.`,
+        },
+        alternates: {
+            canonical: `${BASE_URL}/difficulty/${slug}`,
+        },
     };
 }
 

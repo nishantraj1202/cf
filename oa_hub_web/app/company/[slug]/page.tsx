@@ -10,6 +10,8 @@ import { type Question } from "@/types";
 
 export const dynamic = 'force-dynamic';
 
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://preptracker.com';
+
 interface PageProps {
     params: Promise<{ slug: string }>;
 }
@@ -25,12 +27,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
 
     return {
-        title: `${data.company.name} Interview Questions & OAs | PrepTracker`,
-        description: `Practice real ${data.company.name} interview questions and Online Assessments. Join the community of developers preparing for ${data.company.name}.`,
+        title: `${data.company.name} Interview Questions & OAs`,
+        description: `Practice real ${data.company.name} interview questions and Online Assessments. ${data.questions.length} questions available. Join the community of developers preparing for ${data.company.name}.`,
         openGraph: {
             title: `${data.company.name} Interview Questions | PrepTracker`,
             description: data.company.description,
-        }
+            url: `${BASE_URL}/company/${slug}`,
+            type: 'website',
+        },
+        twitter: {
+            card: 'summary',
+            title: `${data.company.name} Interview Questions`,
+            description: `Practice ${data.questions.length} real ${data.company.name} OA questions`,
+        },
+        alternates: {
+            canonical: `${BASE_URL}/company/${slug}`,
+        },
     };
 }
 
@@ -76,12 +88,54 @@ export default async function CompanyPage({ params }: PageProps) {
 
     const { company, questions } = data;
 
+    // JSON-LD structured data for the company page
+    const organizationJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": company.name,
+        "url": `${BASE_URL}/company/${company.slug}`,
+        "description": company.description,
+    };
+
+    const itemListJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": `${company.name} Interview Questions`,
+        "description": `Collection of ${company.name} interview and OA questions`,
+        "numberOfItems": questions.length,
+        "itemListElement": questions.slice(0, 10).map((q: Question, index: number) => ({
+            "@type": "ListItem",
+            "position": index + 1,
+            "item": {
+                "@type": "Course",
+                "name": q.title,
+                "description": q.desc?.substring(0, 100) || "",
+                "provider": {
+                    "@type": "Organization",
+                    "name": company.name
+                },
+                "url": `${BASE_URL}/question/${q.slug || q.id}`
+            }
+        }))
+    };
+
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-dark-950 text-gray-200">
+            {/* Inject JSON-LD structured data */}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+            />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+            />
+
             <Navbar />
             <div className="flex-1 flex overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto custom-scroll">
+
 
                     {/* Company Header Banner */}
                     <div className="bg-dark-900 border-b border-dark-800">

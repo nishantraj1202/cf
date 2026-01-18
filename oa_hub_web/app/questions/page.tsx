@@ -4,9 +4,19 @@ import { Sidebar } from "@/components/Sidebar";
 import { QuestionExplorer } from "@/components/QuestionExplorer";
 import { Metadata } from "next";
 
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://preptracker.com';
+
 export const metadata: Metadata = {
-    title: "Problem Set | PrepTracker",
-    description: "Browse the latest interview questions and online assessments.",
+    title: "Problem Set - Browse All Questions",
+    description: "Browse and filter hundreds of real interview questions and online assessments from Google, Meta, Amazon, Apple, Microsoft, and 50+ top tech companies.",
+    openGraph: {
+        title: "Coding Problems & OA Questions | PrepTracker",
+        description: "Find the perfect practice problem. Filter by company, topic, or difficulty.",
+        url: `${BASE_URL}/questions`,
+    },
+    alternates: {
+        canonical: `${BASE_URL}/questions`,
+    },
 };
 
 export const dynamic = 'force-dynamic';

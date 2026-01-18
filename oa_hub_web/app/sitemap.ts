@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 
 import { API_URL as BASE_API_URL } from "@/lib/utils";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://preptracker.example.com';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://preptracker.com';
 const API_URL = `${BASE_API_URL}/api`;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
