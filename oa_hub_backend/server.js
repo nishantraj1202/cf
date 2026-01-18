@@ -9,6 +9,7 @@ const crypto = require('crypto');
 const connectDB = require('./config/db');
 const Question = require('./models/Question');
 const Company = require('./models/Company');
+const CompanyImage = require('./models/CompanyImage');
 
 // --- Input Sanitization Helpers ---
 // Sanitize string: trim, escape HTML, limit length
@@ -69,7 +70,7 @@ app.use(cookieParser());
 
 // Rate Limiting
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
+    windowMs: 1 * 60 * 1000, // 15 minutes
     max: 100, // Limit each IP to 100 requests per windowMs
     message: "Too many requests from this IP, please try again later."
 });
@@ -554,6 +555,37 @@ app.get('/api/companies', async (req, res) => {
     }
 });
 
+// 3b. Get Images by Company Slug
+app.get('/api/companies/:slug/images', async (req, res) => {
+    try {
+        let slug = req.params.slug || '';
+        slug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '').substring(0, 100);
+
+        if (!slug) {
+            return res.status(400).json({ error: "Invalid company slug" });
+        }
+
+        const companyImages = await CompanyImage.findOne({ companySlug: slug });
+
+        if (!companyImages) {
+            return res.json({
+                company: slug,
+                images: [],
+                count: 0
+            });
+        }
+
+        res.json({
+            company: slug,
+            images: companyImages.imageUrls || [],
+            count: companyImages.imageUrls ? companyImages.imageUrls.length : 0
+        });
+    } catch (err) {
+        console.error("Error fetching company images:", err);
+        res.status(500).json({ error: 'Server Error' });
+    }
+});
+
 // 3a. Global Search (Unified)
 app.get('/api/search', async (req, res) => {
     try {
@@ -778,6 +810,28 @@ app.post('/api/questions', async (req, res) => {
             views: '0',
             likes: '0%'
         });
+
+        // Store image URLs by company name in CompanyImage collection
+        if (processedImages.length > 0 && company && company.toLowerCase() !== 'unknown' && company.trim() !== '') {
+            const companyLower = company.toLowerCase().trim();
+            const companySlugForImages = companyLower.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+
+            try {
+                // Use findOneAndUpdate with $push to add URLs to existing array, or create new doc if not exists
+                await CompanyImage.findOneAndUpdate(
+                    { companySlug: companySlugForImages },
+                    {
+                        $setOnInsert: { companyName: companyLower, companySlug: companySlugForImages },
+                        $push: { imageUrls: { $each: processedImages } }
+                    },
+                    { upsert: true, new: true }
+                );
+                console.log(`Stored ${processedImages.length} image URL(s) for company: ${companyLower}`);
+            } catch (imgErr) {
+                console.error(`Failed to store company images: ${imgErr.message}`);
+            }
+        }
+
 
         // Sync with Company Collection AND Normalize if created with approved status
         if (newQuestion.status === 'approved' && newQuestion.company && newQuestion.company.trim() !== "" && newQuestion.company.toLowerCase() !== "unknown") {
