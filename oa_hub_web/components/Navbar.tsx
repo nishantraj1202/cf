@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Search, Upload, X, Menu, Loader2 } from "lucide-react";
+import { Search, X, Menu, Loader2 } from "lucide-react";
 import { API_URL, cn } from "@/lib/utils";
 
 interface Suggestion {
@@ -26,7 +26,7 @@ export function Navbar() {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
 
-    const placeholder = "Search companies or questions...";
+    const placeholder = "Search videos, just kidding companies, question...";
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

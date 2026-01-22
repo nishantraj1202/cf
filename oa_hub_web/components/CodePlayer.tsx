@@ -70,11 +70,13 @@ export function CodePlayer({ question }: CodePlayerProps) {
     }, [isConsoleDragging]);
 
     // Generate dynamic templates based on test cases
+    const testCasesJson = JSON.stringify(question.testCases || []);
     const signatures = useMemo(() => {
         return generateSignatures(question.testCases || []);
-    }, [JSON.stringify(question.testCases)]);
+    }, [testCasesJson]);
 
     // Update code template when language changes
+    const snippetsJson = JSON.stringify(question.snippets);
     useEffect(() => {
         if (question.snippets && question.snippets[language]) {
             setCode(question.snippets[language]!);
@@ -82,7 +84,7 @@ export function CodePlayer({ question }: CodePlayerProps) {
             // Use generated signatures based on test cases
             setCode(signatures[language]);
         }
-    }, [language, question.title, JSON.stringify(question.snippets), signatures]);
+    }, [language, question.title, question.snippets, snippetsJson, signatures]);
 
     // Helper: Parse logs to find status and output for a specific test case
     const getTestCaseResult = (index: number) => {
@@ -146,7 +148,12 @@ export function CodePlayer({ question }: CodePlayerProps) {
             }
 
             if (data.logs) {
-                setLogs(data.logs);
+                const newLogs = [...data.logs];
+                if (data.analysis) {
+                    // Inject a special log entry for complexity that UI can parse
+                    newLogs.push(`Complexity: Time: ${data.analysis.time} | Space: ${data.analysis.space}`);
+                }
+                setLogs(newLogs);
             } else {
                 setLogs(["> Error executing code.", JSON.stringify(data)]);
             }
@@ -397,6 +404,20 @@ export function CodePlayer({ question }: CodePlayerProps) {
                                                         <span>Duration: <span className="text-white">12 ms</span></span>
                                                         <span>Load Size: <span className="text-white">6.4 MB</span></span>
                                                     </div>
+
+                                                    {/* AI Complexity Results */}
+                                                    {logs.some(l => l.startsWith("Complexity:")) && (
+                                                        <div className="mt-3 flex gap-4 text-xs font-mono border-t border-white/5 pt-3">
+                                                            <div className="flex items-center gap-2 text-brand">
+                                                                <span className="font-bold">Time:</span>
+                                                                <span className="bg-brand/10 px-1.5 py-0.5 rounded border border-brand/20">{logs.find(l => l.startsWith("Complexity:"))?.split("|")[0].replace("Complexity: Time: ", "")}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 text-purple-400">
+                                                                <span className="font-bold">Space:</span>
+                                                                <span className="bg-purple-400/10 px-1.5 py-0.5 rounded border border-purple-400/20">{logs.find(l => l.startsWith("Complexity:"))?.split("|")[1].replace(" Space: ", "")}</span>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             ) : (
                                                 <div className="flex flex-col">

@@ -140,7 +140,7 @@ export default async function Home() {
                       <div className="flex items-center gap-3 text-sm text-gray-300 mb-6">
                         <span className="font-bold text-white">{featured.company}</span>
                         <span>•</span>
-                        <span>{featured.views || '0'} Views</span>
+                        <span>{(parseInt(featured.views || '0') + 100).toLocaleString()} Views</span>
                         <span>•</span>
                         <span className={cn(
                           "font-bold",
@@ -196,7 +196,7 @@ export default async function Home() {
                           <h3 className="text-white font-bold text-sm leading-tight group-hover:text-brand line-clamp-2 mb-1">{q.title}</h3>
                           <div className="text-gray-400 text-xs">
                             <p className="hover:text-white transition-colors flex items-center gap-1">{q.company || 'Unknown'} <CheckCircle className="w-3 h-3 text-gray-500" /></p>
-                            <p>{q.views || '0'} views • 2 days ago</p>
+                            <p>{(parseInt(q.views || '0') + 100).toLocaleString()} views • 2 days ago</p>
                           </div>
                         </div>
                       </div>

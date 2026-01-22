@@ -658,6 +658,12 @@ app.get('/api/questions/:id', async (req, res) => {
         }
 
         if (question) {
+            // INCREMENT VIEWS
+            let currentViews = parseInt(question.views || "0");
+            if (isNaN(currentViews)) currentViews = 0;
+            question.views = (currentViews + 1).toString();
+            await question.save(); // Save the incremented view count
+
             res.json({ ...question.toObject(), id: question._id });
         } else {
             res.status(404).json({ error: "Question not found" });
@@ -1718,7 +1724,37 @@ ${userCode}
                 }
             }
 
-            return res.json({ status, logs });
+            // 6. AI Complexity Analysis (If Groq is configured)
+            let analysis = null;
+            if (groq && status === 'accepted') {
+                try {
+                    console.log("Debug: Analyzing complexity with AI...");
+                    const completion = await groq.chat.completions.create({
+                        model: "llama-3.1-8b-instant",
+                        messages: [
+                            {
+                                role: "system",
+                                content: "You are a Big O notation expert. Analyze the given code and return ONLY a JSON object with keys: 'time' (string, e.g. 'O(n)'), 'space' (string, e.g. 'O(1)'), and 'explanation' (string, minimal 1-2 sentences)."
+                            },
+                            {
+                                role: "user",
+                                content: `Analyze this ${language} code:\n\n${code}`
+                            }
+                        ],
+                        temperature: 0.1,
+                        max_tokens: 150,
+                        response_format: { type: "json_object" }
+                    });
+
+                    analysis = JSON.parse(completion.choices[0].message.content);
+                    console.log("Debug: Analysis Result:", analysis);
+                } catch (aiErr) {
+                    console.error("AI Analysis Failed:", aiErr.message);
+                    // Don't fail the execution if AI fails
+                }
+            }
+
+            return res.json({ status, logs, analysis });
         }
 
     } catch (error) {

@@ -29,6 +29,23 @@ async function getQuestion(slug: string): Promise<Question | null> {
     }
 }
 
+async function getUpNext(currentId: string | number): Promise<Question[]> {
+    try {
+        const res = await fetch(`${API_URL}/api/questions`, { cache: 'no-store' });
+        if (!res.ok) return [];
+        const responseData = await res.json();
+
+        // Handle both array and paginated response structure
+        const allQuestions = Array.isArray(responseData)
+            ? responseData
+            : (responseData.questions || []);
+
+        return allQuestions.filter((q: Question) => q.id !== currentId).slice(0, 5);
+    } catch (error) {
+        return [];
+    }
+}
+
 
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -92,6 +109,7 @@ export default async function QuestionPage({ params }: PageProps) {
         );
     }
 
+    const upNext = await getUpNext(question.id);
     const companySlug = question.company.toLowerCase().replace(/\s+/g, '-');
 
     // JSON-LD Schema
@@ -154,6 +172,8 @@ export default async function QuestionPage({ params }: PageProps) {
                                                     {question.difficulty}
                                                 </span>
                                                 <span className="text-xs">{question.duration}</span>
+                                                <span className="text-xs text-gray-600">•</span>
+                                                <span className="text-xs">{(parseInt(question.views || '0') + 100).toLocaleString()} views</span>
                                             </div>
                                         </div>
 
@@ -223,6 +243,8 @@ export default async function QuestionPage({ params }: PageProps) {
                                                 {question.difficulty}
                                             </span>
                                             <span className="text-xs">{question.duration}</span>
+                                            <span className="text-xs text-gray-600">•</span>
+                                            <span className="text-xs">{(parseInt(question.views || '0') + 100).toLocaleString()} views</span>
 
                                             <div className="ml-auto">
                                                 <QuestionInteractions question={question} />
@@ -268,6 +290,27 @@ export default async function QuestionPage({ params }: PageProps) {
                                         {/* EEAT: Author Signal */}
                                         <div className="pt-4 border-t border-dark-800">
                                             <AuthorCard />
+                                        </div>
+
+                                        {/* Up Next List */}
+                                        <div className="pt-6 border-t border-dark-800">
+                                            <h3 className="font-bold text-gray-400 text-xs uppercase tracking-wider mb-4">Up Next</h3>
+                                            <div className="space-y-3">
+                                                {upNext.map((q: Question) => (
+                                                    <Link key={q.id} href={`/question/${q.slug || q.id}`} className="flex gap-3 p-2 -mx-2 hover:bg-dark-800 rounded group transition-colors">
+                                                        <div className="relative w-24 aspect-video bg-dark-800 rounded overflow-hidden shrink-0 border border-dark-700 group-hover:border-brand/50">
+                                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                                <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-[10px]", q.img)}>{q.company[0]}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <h4 className="text-white font-medium text-sm truncate group-hover:text-brand transition-colors">{q.title}</h4>
+                                                            <p className="text-gray-500 text-xs mt-0.5">{q.company}</p>
+                                                            <p className="text-[10px] text-gray-600 mt-1">{q.difficulty}</p>
+                                                        </div>
+                                                    </Link>
+                                                ))}
+                                            </div>
                                         </div>
 
                                         <div className="text-[10px] text-gray-600 font-mono text-center mt-4">
