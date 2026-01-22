@@ -2,8 +2,8 @@ import React from "react";
 import { type Metadata } from "next";
 import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
-import { QuestionList } from "@/components/QuestionList";
-import { CheckCircle, SearchX } from "lucide-react";
+import { CompanyPageContent } from "@/components/CompanyPageContent";
+import { CheckCircle } from "lucide-react";
 import { cn, API_URL } from "@/lib/utils";
 import Link from "next/link";
 import { type Question } from "@/types";
@@ -176,35 +176,14 @@ export default async function CompanyPage({ params }: PageProps) {
                                 </div>
                             </div>
 
-                            {/* Tabs - Simple */}
-                            <div className="flex items-center gap-8 mt-8 border-b border-dark-700 text-sm font-bold text-gray-400 pb-0.5">
-                                <div className="text-white border-b-2 border-white pb-3 px-2 cursor-pointer">HOME</div>
-                                <div className="hover:text-white pb-3 px-2 cursor-pointer transition-colors">QUESTIONS</div>
-                                <div className="hover:text-white pb-3 px-2 cursor-pointer transition-colors">COMMUNITY</div>
-                                <div className="hover:text-white pb-3 px-2 cursor-pointer transition-colors">ABOUT</div>
-                            </div>
                         </div>
                     </div>
 
-                    {/* Content Grid */}
-                    <div className="max-w-7xl mx-auto p-4 sm:p-8">
-                        <h2 className="text-lg font-bold text-white mb-4">Latest Questions</h2>
-
-                        {questions.length > 0 ? (
-                            <div className="animate-fade-in">
-                                <QuestionList questions={questions} />
-                            </div>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center py-20 bg-dark-800/50 rounded-lg border border-dashed border-dark-700">
-                                <SearchX className="w-12 h-12 text-gray-600 mb-4" />
-                                <h3 className="text-lg font-bold text-white">No questions yet</h3>
-                                <p className="text-gray-500 text-sm">Check back later for new {company.name} OAs.</p>
-                            </div>
-                        )}
-                    </div>
+                    {/* Interactive Content */}
+                    <CompanyPageContent company={company} questions={questions} />
 
                 </main>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

@@ -42,7 +42,7 @@ export function QuestionCard({ question }: QuestionCardProps) {
                 >
                     {question.company[0]}
                 </Link>
-                <div>
+                <div className="flex-1 min-w-0">
                     <h3 className="text-white font-bold text-sm leading-tight group-hover:text-brand line-clamp-2 mb-1 transition-colors">
                         <Link href={`/question/${question.slug || question.id}`}>{question.title}</Link>
                     </h3>
@@ -56,8 +56,8 @@ export function QuestionCard({ question }: QuestionCardProps) {
                         </Link>
                         <p className="text-[10px] text-gray-500 mt-1 flex justify-between items-center">
                             <span>Online Assessment</span>
-                            <span className="text-gray-600">
-                                {question.date ? new Date(question.date).toLocaleDateString() : 'Recent'}
+                            <span className="text-gray-600 whitespace-nowrap ml-2">
+                                {question.date ? new Date(question.date).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' }) : 'Recent'}
                             </span>
                         </p>
                     </div>

@@ -15,40 +15,47 @@ export default function AboutPage() {
             <main className="flex-1 overflow-y-auto custom-scroll">
                 <div className="max-w-4xl mx-auto px-6 py-16">
 
-                    {/* Hero Section */}
-                    <div className="text-center mb-16">
-                        <h1 className="text-5xl font-bold text-white mb-6">About PrepTracker</h1>
-                        <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-                            The fastest way to prepare for technical interviews. No fluff, just real questions from top companies.
-                        </p>
-                    </div>
+                    {/* Main Content Card */}
+                    <div className="bg-dark-900 border border-dark-800 rounded-2xl p-8 md:p-12 mb-12 relative overflow-hidden">
+                        {/* Background Decoration */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-brand/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
 
-                    {/* Author/Mission Section */}
-                    <div className="bg-dark-900 border border-dark-800 rounded-2xl p-8 md:p-12 mb-12">
-                        <div className="flex flex-col md:flex-row gap-10 items-center">
-                            <div className="shrink-0 text-center">
-                                <div className="w-40 h-40 rounded-full bg-brand/10 border-4 border-dark-800 flex items-center justify-center text-brand font-bold text-5xl mb-4 mx-auto">
+                        {/* Hero / Header Section Inside Card */}
+                        <div className="text-center mb-12 border-b border-dark-800 pb-10">
+                            <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">About PrepTracker</h1>
+                            <p className="text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed">
+                                The fastest way to prepare for technical interviews. No fluff, just real questions from top companies.
+                            </p>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row gap-10 items-start">
+                            <div className="shrink-0 text-center md:text-left mx-auto md:mx-0">
+                                <div className="w-32 h-32 rounded-full bg-dark-950 border-4 border-dark-800 flex items-center justify-center text-brand font-bold text-4xl mb-4 mx-auto md:mx-0 shadow-xl">
                                     AD
                                 </div>
-                                <h3 className="text-2xl font-bold text-white">Amit Dayal</h3>
-                                <div className="text-brand font-bold text-sm uppercase tracking-wide mt-1">Creator & Maintainer</div>
+                                <h3 className="text-xl font-bold text-white">Amit Dayal</h3>
+                                <div className="text-brand font-bold text-xs uppercase tracking-wide mt-1">Creator & Maintainer</div>
                             </div>
 
-                            <div className="flex-1 space-y-4">
-                                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                                    Why I built this?
-                                </h2>
-                                <p className="text-gray-400 leading-relaxed">
-                                    Hello! I&apos;m <strong>Amit Dayal</strong>, a Computer Science Engineer from <strong>NIT Jalandhar</strong>.
-                                    Like many of you, I realized that existing platforms (LeetCode, GFG) are bloated with thousands of irrelevant questions.
-                                </p>
-                                <p className="text-gray-400 leading-relaxed">
-                                    I built <strong>PrepTracker</strong> to solve a simple problem:
-                                    <em> &quot;What are the exact questions companies like Uber, Google, and Amazon are asking RIGHT NOW?&quot;</em>
-                                </p>
-                                <p className="text-gray-400 leading-relaxed">
-                                    Every question on this site is curated based on recent interview experiences. No junk, just high-ROI problems.
-                                </p>
+                            <div className="flex-1 space-y-6 text-left">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-white mb-3">
+                                        Why I built this?
+                                    </h2>
+                                    <p className="text-gray-400 leading-relaxed mb-4">
+                                        Hello! I&apos;m <strong>Amit Dayal</strong>, a Computer Science Engineer from <strong>NIT Jalandhar</strong>.
+                                        Like many of you, I realized that existing platforms (LeetCode, GFG) are bloated with thousands of irrelevant questions.
+                                    </p>
+                                    <p className="text-gray-400 leading-relaxed">
+                                        I built <strong>PrepTracker</strong> to solve a simple problem:
+                                        <em> &quot;What are the exact questions companies like Uber, Google, and Amazon are asking RIGHT NOW?&quot;</em>
+                                    </p>
+                                </div>
+                                <div className="bg-dark-950/50 p-4 rounded-lg border border-dark-800/50">
+                                    <p className="text-gray-400 text-sm italic">
+                                        &quot;Every question on this site is curated based on recent interview experiences. No junk, just high-ROI problems.&quot;
+                                    </p>
+                                </div>
                             </div>
                         </div>
 

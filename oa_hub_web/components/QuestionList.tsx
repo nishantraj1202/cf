@@ -27,8 +27,8 @@ export function QuestionList({ questions }: QuestionListProps) {
     };
 
     return (
-        <div className="w-full overflow-hidden rounded-xl border border-dark-800 bg-dark-900/50">
-            <table className="w-full text-left border-collapse">
+        <div className="w-full overflow-x-auto rounded-xl border border-dark-800 bg-dark-900/50">
+            <table className="w-full text-left border-collapse min-w-[800px]">
                 <thead>
                     <tr className="border-b border-dark-800 text-gray-400 text-xs uppercase tracking-wider">
                         <th className="px-6 py-4 font-medium">Status</th>
