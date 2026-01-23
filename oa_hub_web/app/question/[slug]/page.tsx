@@ -58,7 +58,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         };
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://preptracker.com';
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://codinzhub.com';
     const cleanDesc = question.desc?.replace(/[#*`]/g, '').substring(0, 150) || '';
 
     return {

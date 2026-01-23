@@ -12,7 +12,7 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://preptracker.com';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://codinzhub.com';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -27,8 +27,8 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: "PrepTracker - Premium OA & Interview Prep Hub",
-    template: "%s | PrepTracker",
+    default: "Codinzhub - Premium OA & Interview Prep Hub",
+    template: "%s | Codinzhub",
   },
   description: "The ultimate platform for tracking and practicing Online Assessments (OA) and coding interview questions from top tech companies like Google, Meta, Amazon, and more.",
   keywords: [
@@ -46,9 +46,9 @@ export const metadata: Metadata = {
     "algorithms",
     "data structures",
   ],
-  authors: [{ name: "PrepTracker Team" }],
-  creator: "PrepTracker",
-  publisher: "PrepTracker",
+  authors: [{ name: "Codinzhub Team" }],
+  creator: "Codinzhub",
+  publisher: "Codinzhub",
   formatDetection: {
     email: false,
     address: false,
@@ -58,24 +58,24 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: BASE_URL,
-    siteName: "PrepTracker",
-    title: "PrepTracker - Premium OA & Interview Prep Hub",
+    siteName: "Codinzhub",
+    title: "Codinzhub - Premium OA & Interview Prep Hub",
     description: "Master coding interviews with real OA questions from top tech companies.",
     images: [
       {
         url: `${BASE_URL}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: "PrepTracker - Ace Your Coding Interviews",
+        alt: "Codinzhub - Ace Your Coding Interviews",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "PrepTracker - Premium OA & Interview Prep Hub",
+    title: "Codinzhub - Premium OA & Interview Prep Hub",
     description: "Master coding interviews with real OA questions from top tech companies.",
     images: [`${BASE_URL}/og-image.png`],
-    creator: "@preptracker",
+    creator: "@Codinzhub",
   },
   robots: {
     index: true,

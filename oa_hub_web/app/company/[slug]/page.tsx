@@ -10,7 +10,7 @@ import { type Question } from "@/types";
 
 export const dynamic = 'force-dynamic';
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://preptracker.com';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://codinzhub.com';
 
 interface PageProps {
     params: Promise<{ slug: string }>;
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         title: `${data.company.name} Interview Questions & OAs`,
         description: `Practice real ${data.company.name} interview questions and Online Assessments. ${data.questions.length} questions available. Join the community of developers preparing for ${data.company.name}.`,
         openGraph: {
-            title: `${data.company.name} Interview Questions | PrepTracker`,
+            title: `${data.company.name} Interview Questions | Codinzhub`,
             description: data.company.description,
             url: `${BASE_URL}/company/${slug}`,
             type: 'website',

@@ -5,18 +5,19 @@ import { Sidebar } from "@/components/Sidebar";
 import { IntroVideo } from "@/components/IntroVideo";
 import { FAQ } from "@/components/FAQ";
 import Link from "next/link";
+import { Footer } from "@/components/Footer";
 import { Play, CheckCircle, SearchX } from "lucide-react";
 import { type Metadata } from "next";
 import { API_URL, cn } from "@/lib/utils";
 import { type Question } from "@/types";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://preptracker.com';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://codinzhub.com';
 
 export const metadata: Metadata = {
   title: "Home - Premium Coding Interview Prep",
   description: "The ultimate guide to cracking online assessments. Practice real OA questions from Google, Meta, Amazon, and 50+ top tech companies. Start your interview prep today!",
   openGraph: {
-    title: "PrepTracker - Master Your Coding Interviews",
+    title: "Codinzhub - Master Your Coding Interviews",
     description: "Practice real OA questions from top tech companies. Join thousands of developers preparing for their dream jobs.",
     url: BASE_URL,
   },
@@ -51,7 +52,7 @@ export default async function Home() {
   const websiteJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": "PrepTracker",
+    "name": "Codinzhub",
     "url": BASE_URL,
     "description": "The ultimate platform for tracking and practicing Online Assessments and coding interview questions.",
     "potentialAction": {
@@ -224,8 +225,8 @@ export default async function Home() {
               </div>
 
               <FAQ />
-
             </div>
+            <Footer className="lg:hidden" />
           </main>
         </div>
       </div>

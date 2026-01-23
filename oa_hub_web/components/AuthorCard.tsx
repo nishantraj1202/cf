@@ -16,7 +16,7 @@ interface AuthorProps {
 export function AuthorCard({
     name = "Amit Dayal",
     role = "Software Engineer",
-    bio = "CSE Undergrad @ NIT Jalandhar. Expert in Data Structures & Algorithms. Building tools to help developers crack FAANG interviews.",
+    bio = "Expert in Data Structures & Algorithms. Building tools to help developers crack FAANG interviews.",
     initials = "AD",
     verified = true,
     socials = {

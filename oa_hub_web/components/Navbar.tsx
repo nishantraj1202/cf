@@ -16,6 +16,7 @@ interface Suggestion {
 export function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
     const [showPremiumPopup, setShowPremiumPopup] = useState(false);
+    const [showMobileSearch, setShowMobileSearch] = useState(false);
 
     // Search State
     const pathname = usePathname();
@@ -172,6 +173,13 @@ export function Navbar() {
                 <div className="w-8 h-8 rounded-full bg-dark-600 flex items-center justify-center text-xs font-bold text-gray-400 border border-dark-500 cursor-pointer hover:border-white transition-colors">
                     ME
                 </div>
+                <button
+                    onClick={() => setShowMobileSearch(!showMobileSearch)}
+                    className="md:hidden w-10 h-10 flex items-center justify-center text-white hover:bg-dark-700/50 rounded-full transition-colors"
+                >
+                    <Search className="w-5 h-5 text-gray-300" />
+                </button>
+
                 {/* Mobile Menu Toggle */}
                 <button
                     onClick={() => setIsOpen(!isOpen)}
@@ -180,6 +188,61 @@ export function Navbar() {
                     {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                 </button>
             </div>
+
+            {/* Mobile Search Overlay */}
+            {showMobileSearch && (
+                <div className="absolute top-16 left-0 w-full bg-dark-900 border-b border-dark-700 p-4 md:hidden z-40 animate-in slide-in-from-top-2">
+                    <div className="relative">
+                        <input
+                            type="text"
+                            autoFocus
+                            className="block w-full pl-4 pr-10 py-3 bg-black border border-dark-600 text-white text-base rounded-lg focus:ring-1 focus:ring-brand focus:border-brand transition-all placeholder-gray-600 focus:outline-none"
+                            placeholder={placeholder}
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            onKeyDown={(e) => {
+                                handleSearchSubmit(e);
+                                if (e.key === "Enter") setShowMobileSearch(false);
+                            }}
+                        />
+                        <button
+                            onClick={() => {
+                                setQuery("");
+                                if (!query) setShowMobileSearch(false);
+                            }}
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-500 hover:text-white"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+                    {/* Suggestion Dropdown for Mobile */}
+                    {showSuggestions && suggestions.length > 0 && (
+                        <div className="mt-2 bg-dark-800 border border-dark-600 rounded-lg shadow-xl overflow-hidden">
+                            {suggestions.map((item, idx) => (
+                                <Link
+                                    key={idx}
+                                    href={item.type === 'company' ? `/company/${item.slug}` : `/question/${item.slug}`}
+                                    className="block px-4 py-3 hover:bg-dark-700 transition-colors border-b border-dark-700/50 last:border-0"
+                                    onClick={() => {
+                                        setShowSuggestions(false);
+                                        setShowMobileSearch(false);
+                                    }}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-white text-sm font-medium">{item.title}</span>
+                                        <span className={cn(
+                                            "text-[10px] font-bold px-1.5 py-0.5 rounded uppercase",
+                                            item.type === 'company' ? "bg-blue-900/50 text-blue-300" : "bg-brand/20 text-brand"
+                                        )}>
+                                            {item.type === 'company' ? "Comp" : "Que"}
+                                        </span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Mobile Menu Dropdown */}
             {isOpen && (

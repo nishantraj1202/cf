@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { Home, History, ThumbsUp } from "lucide-react";
+import { Footer } from "./Footer";
 
 export function Sidebar() {
     return (
@@ -24,13 +25,8 @@ export function Sidebar() {
 
 
 
-            <div className="mt-8 px-3">
-                <div className="text-[10px] text-gray-500 leading-relaxed">
-                    &copy; 2026 CodinzHub<br />
-                    Terms • Privacy • Content Policy<br />
-                    <span className="text-dark-600">v2.4.0 (Stable)</span>
-                </div>
-            </div>
+            <Footer />
+
         </aside>
     );
 }

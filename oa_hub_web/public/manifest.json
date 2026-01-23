@@ -1,6 +1,6 @@
 {
-    "name": "PrepTracker",
-    "short_name": "PrepTracker",
+    "name": "Codinzhub",
+    "short_name": "Codinzhub",
     "description": "The ultimate platform for tracking and practicing Online Assessments and coding interview questions from top tech companies.",
     "start_url": "/",
     "display": "standalone",

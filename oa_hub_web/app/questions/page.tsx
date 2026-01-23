@@ -3,14 +3,15 @@ import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
 import { QuestionExplorer } from "@/components/QuestionExplorer";
 import { Metadata } from "next";
+import { Footer } from "@/components/Footer";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://preptracker.com';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://codinzhub.com';
 
 export const metadata: Metadata = {
     title: "Problem Set - Browse All Questions",
     description: "Browse and filter hundreds of real interview questions and online assessments from Google, Meta, Amazon, Apple, Microsoft, and 50+ top tech companies.",
     openGraph: {
-        title: "Coding Problems & OA Questions | PrepTracker",
+        title: "Coding Problems & OA Questions | Codinzhub",
         description: "Find the perfect practice problem. Filter by company, topic, or difficulty.",
         url: `${BASE_URL}/questions`,
     },
@@ -31,6 +32,7 @@ export default function QuestionsPage() {
                     <Suspense fallback={<div className="text-center py-10 text-gray-400">Loading questions...</div>}>
                         <QuestionExplorer />
                     </Suspense>
+                    <Footer className="lg:hidden" />
                 </main>
             </div>
         </div>

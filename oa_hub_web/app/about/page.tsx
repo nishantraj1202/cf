@@ -4,8 +4,8 @@ import { Mail, Linkedin, Github } from "lucide-react";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: "About PrepTracker | Amit Dayal",
-    description: "Learn about PrepTracker and its creator, Amit Dayal. Our mission is to simplify coding interview preparation.",
+    title: "About Codinzhub | Amit Dayal",
+    description: "Learn about Codinzhub and its creator, Amit Dayal. Our mission is to simplify coding interview preparation.",
 };
 
 export default function AboutPage() {
@@ -22,7 +22,7 @@ export default function AboutPage() {
 
                         {/* Hero / Header Section Inside Card */}
                         <div className="text-center mb-12 border-b border-dark-800 pb-10">
-                            <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">About PrepTracker</h1>
+                            <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">About Codinzhub</h1>
                             <p className="text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed">
                                 The fastest way to prepare for technical interviews. No fluff, just real questions from top companies.
                             </p>
@@ -47,7 +47,7 @@ export default function AboutPage() {
                                         Like many of you, I realized that existing platforms (LeetCode, GFG) are bloated with thousands of irrelevant questions.
                                     </p>
                                     <p className="text-gray-400 leading-relaxed">
-                                        I built <strong>PrepTracker</strong> to solve a simple problem:
+                                        I built <strong>Codinzhub</strong> to solve a simple problem:
                                         <em> &quot;What are the exact questions companies like Uber, Google, and Amazon are asking RIGHT NOW?&quot;</em>
                                     </p>
                                 </div>
@@ -69,7 +69,7 @@ export default function AboutPage() {
                                 <Linkedin className="w-5 h-5" />
                                 <span>LinkedIn</span>
                             </a>
-                            <a href="mailto:contact@preptracker.com" className="flex items-center gap-2 text-gray-400 hover:text-red-400 transition-colors">
+                            <a href="mailto:contact@codinzhub.com" className="flex items-center gap-2 text-gray-400 hover:text-red-400 transition-colors">
                                 <Mail className="w-5 h-5" />
                                 <span>Contact Me</span>
                             </a>

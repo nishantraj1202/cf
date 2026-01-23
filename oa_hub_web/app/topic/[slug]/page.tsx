@@ -10,7 +10,7 @@ import { API_URL } from "@/lib/utils";
 
 export const dynamic = 'force-dynamic';
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://preptracker.com';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://codinzhub.com';
 
 interface PageProps {
     params: Promise<{ slug: string }>;
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         title: `Top ${topicName} Interview Questions (2025)`,
         description: `Master ${topicName} data structures and algorithms with our curated list of real interview questions from top tech companies.`,
         openGraph: {
-            title: `${topicName} Interview Questions | PrepTracker`,
+            title: `${topicName} Interview Questions | Codinzhub`,
             description: `Best ${topicName} problems for coding interviews.`,
             url: `${BASE_URL}/topic/${slug}`,
         },

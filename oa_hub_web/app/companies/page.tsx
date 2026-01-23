@@ -6,7 +6,7 @@ import { CompanyList } from "@/components/CompanyList";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Companies | PrepTracker",
+    title: "Companies | Codinzhub",
     description: "Browse companies and their latest interview questions.",
 };
 
