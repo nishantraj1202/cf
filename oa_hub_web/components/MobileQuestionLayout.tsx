@@ -15,7 +15,7 @@ export function MobileQuestionLayout({ editor, details }: MobileQuestionLayoutPr
     return (
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
             {/* Mobile Tab Bar (Bottom) */}
-            <div className="lg:hidden fixed bottom-0 left-0 right-0 h-14 bg-dark-900 border-t border-dark-700 flex z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.3)]">
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 h-14 bg-dark-900/90 backdrop-blur-md border-t border-dark-700 flex z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.3)] pb-[env(safe-area-inset-bottom)] box-content">
                 <button
                     onClick={() => setActiveTab("details")}
                     className={cn(

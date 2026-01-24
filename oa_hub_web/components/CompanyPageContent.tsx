@@ -23,7 +23,7 @@ export function CompanyPageContent({ company, questions }: CompanyPageContentPro
             {/* Tabs */}
             <div className="bg-dark-900 border-b border-dark-800 sticky top-16 z-20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-8">
-                    <div className="flex items-center justify-between sm:justify-start sm:gap-8 text-[10px] sm:text-sm font-bold text-gray-400 overflow-x-auto no-scrollbar">
+                    <div className="flex items-center gap-6 sm:gap-8 text-xs sm:text-sm font-bold text-gray-400 overflow-x-auto no-scrollbar py-1">
                         <button
                             onClick={() => setActiveTab("home")}
                             className={cn(

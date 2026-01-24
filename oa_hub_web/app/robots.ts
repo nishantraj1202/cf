@@ -8,7 +8,14 @@ export default function robots(): MetadataRoute.Robots {
             {
                 userAgent: '*',
                 allow: '/',
-                disallow: ['/admin', '/admin/', '/api/', '/login', '/dashboard', '/signup', '/preview/'],
+                disallow: [
+                    '/admin',
+                    '/api',
+                    '/login',
+                    '/dashboard',
+                    '/signup',
+                    '/preview',
+                ],
             },
             {
                 userAgent: 'GPTBot',
@@ -16,6 +23,5 @@ export default function robots(): MetadataRoute.Robots {
             },
         ],
         sitemap: `${BASE_URL}/sitemap.xml`,
-        host: BASE_URL,
     };
 }

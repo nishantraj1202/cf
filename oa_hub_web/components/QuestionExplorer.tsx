@@ -122,7 +122,7 @@ export function QuestionExplorer() {
 
                 </div>
 
-                <div className="flex flex-wrap gap-3 p-4 bg-dark-800/30 rounded-xl border border-dark-800 items-center">
+                <div className="flex flex-col sm:flex-row flex-wrap gap-3 p-4 bg-dark-800/30 rounded-xl border border-dark-800 items-start sm:items-center">
                     <div className="flex items-center gap-2 text-gray-400 text-sm mr-2">
                         <ListFilter className="w-4 h-4" />
                         <span>Filters:</span>
@@ -132,7 +132,7 @@ export function QuestionExplorer() {
                     <select
                         value={selectedTopic}
                         onChange={(e) => setSelectedTopic(e.target.value)}
-                        className="bg-dark-900 text-white text-sm px-3 py-1.5 rounded-lg border border-dark-700 hover:border-dark-600 focus:border-brand focus:outline-none cursor-pointer transition-colors"
+                        className="w-full sm:w-auto bg-dark-900 text-white text-sm px-3 py-2.5 sm:py-1.5 rounded-lg border border-dark-700 hover:border-dark-600 focus:border-brand focus:outline-none cursor-pointer transition-colors"
                     >
                         {topics.map(t => <option key={t} value={t}>{t === "All" ? "Topic" : t}</option>)}
                     </select>
@@ -141,7 +141,7 @@ export function QuestionExplorer() {
                     <select
                         value={selectedDifficulty}
                         onChange={(e) => setSelectedDifficulty(e.target.value)}
-                        className="bg-dark-900 text-white text-sm px-3 py-1.5 rounded-lg border border-dark-700 hover:border-dark-600 focus:border-brand focus:outline-none cursor-pointer transition-colors"
+                        className="w-full sm:w-auto bg-dark-900 text-white text-sm px-3 py-2.5 sm:py-1.5 rounded-lg border border-dark-700 hover:border-dark-600 focus:border-brand focus:outline-none cursor-pointer transition-colors"
                     >
                         {difficulties.map(d => <option key={d} value={d}>{d === "All" ? "Difficulty" : d}</option>)}
                     </select>

@@ -115,22 +115,49 @@ export default async function QuestionPage({ params }: PageProps) {
     // JSON-LD Schema
     const jsonLd = {
         "@context": "https://schema.org",
-        "@type": "QAPage",
-        "mainEntity": {
-            "@type": "Question",
-            "name": question.title,
-            "text": question.desc,
-            "answerCount": 1,
-            "acceptedAnswer": {
-                "@type": "Answer",
-                "text": question.approach || "See solution code in the editor.",
-                "upvoteCount": parseInt(question.likes) || 0,
+        "@graph": [
+            {
+                "@type": "QAPage",
+                "mainEntity": {
+                    "@type": "Question",
+                    "name": question.title,
+                    "text": question.desc,
+                    "answerCount": 1,
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": question.approach || "See solution code in the editor.",
+                        "upvoteCount": parseInt(question.likes) || 0,
+                    }
+                }
+            },
+            {
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    {
+                        "@type": "ListItem",
+                        "position": 1,
+                        "name": "Home",
+                        "item": process.env.NEXT_PUBLIC_SITE_URL || 'https://codinzhub.com'
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 2,
+                        "name": "Questions",
+                        "item": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://codinzhub.com'}/questions`
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 3,
+                        "name": question.title,
+                        "item": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://codinzhub.com'}/question/${slug}`
+                    }
+                ]
             }
-        }
+        ]
     };
 
     return (
-        <div className="flex flex-col h-screen overflow-hidden bg-dark-950 text-gray-200">
+        <div className="flex flex-col h-[100dvh] overflow-hidden bg-dark-950 text-gray-200">
             {/* Inject JSON-LD */}
             <script
                 type="application/ld+json"

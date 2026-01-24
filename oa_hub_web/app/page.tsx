@@ -86,7 +86,7 @@ export default async function Home() {
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-dark-950 text-gray-200">
+    <div className="flex flex-col h-[100dvh] overflow-hidden bg-dark-950 text-gray-200">
       {/* Inject JSON-LD structured data */}
       <script
         type="application/ld+json"
