@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Search, X, Menu, Loader2 } from "lucide-react";
+import { FeedbackButton } from "./FeedbackButton";
 import { API_URL, cn } from "@/lib/utils";
 
 interface Suggestion {
@@ -164,6 +165,11 @@ export function Navbar() {
             {/* Header Actions */}
             <div className="flex items-center gap-4">
 
+                {/* Feedback Button - Desktop */}
+                <div className="hidden sm:block">
+                    <FeedbackButton variant="navbar" />
+                </div>
+
                 <button
                     onClick={() => setShowPremiumPopup(true)}
                     className="hidden sm:flex items-center gap-2 border border-brand text-brand hover:bg-brand hover:text-black px-3 py-1 rounded text-sm font-bold uppercase transition-all duration-200 shadow-[0_0_10px_rgba(255,153,0,0.2)]"
@@ -259,9 +265,13 @@ export function Navbar() {
                     <Link href="/contribute" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-brand py-2 border-b border-dark-800">
                         Contribute
                     </Link>
-                    <button onClick={() => { setIsOpen(false); setShowPremiumPopup(true); }} className="text-left text-brand font-bold py-2">
+                    <button onClick={() => { setIsOpen(false); setShowPremiumPopup(true); }} className="text-left text-brand font-bold py-2 border-b border-dark-800">
                         Premium
                     </button>
+                    {/* Feedback Button - Mobile */}
+                    <div className="py-2">
+                        <FeedbackButton variant="mobile" />
+                    </div>
                 </div>
             )}
 

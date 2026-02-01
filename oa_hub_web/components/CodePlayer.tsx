@@ -42,6 +42,25 @@ export function CodePlayer({ question }: CodePlayerProps) {
     const consoleRef = useRef<HTMLDivElement>(null);
     const consolePanelRef = useRef<HTMLDivElement>(null);
     const [showUpdatePopup, setShowUpdatePopup] = useState(false);
+    const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+    const settingsRef = useRef<HTMLDivElement>(null);
+
+    // Close settings menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+                setShowSettingsMenu(false);
+            }
+        };
+
+        if (showSettingsMenu) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showSettingsMenu]);
 
     // Handle console (vertical) resize drag
     useEffect(() => {
@@ -304,19 +323,7 @@ export function CodePlayer({ question }: CodePlayerProps) {
                 {/* Code Editor (Right Panel) */}
                 <div ref={consolePanelRef} className="flex-1 flex flex-col bg-[#0f0f0f] relative overflow-hidden">
 
-                    {/* Language Selector Overlay */}
-                    <div className="absolute top-2 right-2 z-10 flex gap-2">
-                        <select
-                            value={language}
-                            onChange={(e) => setLanguage(e.target.value as any)}
-                            className="bg-dark-800 text-gray-300 text-[10px] font-mono border border-dark-600 rounded px-2 py-1 hover:border-brand focus:outline-none cursor-pointer"
-                        >
-                            <option value="cpp">C++ (GCC 9.0)</option>
-                            <option value="java">Java (OpenJDK 17)</option>
-                            <option value="python">Python 3.9</option>
-                            <option value="javascript">JavaScript (Node 20)</option>
-                        </select>
-                    </div>
+
 
                     <Editor
                         height="100%"
@@ -645,9 +652,39 @@ export function CodePlayer({ question }: CodePlayerProps) {
                         CC
                     </button>
 
-                    <button className="text-gray-400 hover:text-white transition-colors">
-                        <Settings className="w-5 h-5" />
-                    </button>
+                    {/* Settings Button with Dropdown */}
+                    <div ref={settingsRef} className="relative">
+                        <button
+                            onClick={() => setShowSettingsMenu(!showSettingsMenu)}
+                            className={cn(
+                                "transition-colors",
+                                showSettingsMenu ? "text-white" : "text-gray-400 hover:text-white"
+                            )}
+                        >
+                            <Settings className="w-5 h-5" />
+                        </button>
+
+                        {/* Settings Dropdown Menu */}
+                        {showSettingsMenu && (
+                            <div className="absolute bottom-full right-0 mb-2 w-48 bg-[#262626] border border-dark-600 rounded-lg shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                                <div className="p-3 border-b border-dark-600">
+                                    <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">Language</span>
+                                    <select
+                                        value={language}
+                                        onChange={(e) => {
+                                            setLanguage(e.target.value as "cpp" | "javascript" | "python" | "java");
+                                        }}
+                                        className="mt-2 w-full bg-[#1e1e1e] text-gray-300 text-xs font-mono border border-dark-600 rounded px-2 py-1.5 hover:border-brand focus:outline-none focus:border-brand cursor-pointer"
+                                    >
+                                        <option value="cpp">C++ (GCC 9.0)</option>
+                                        <option value="java">Java (OpenJDK 17)</option>
+                                        <option value="python">Python 3.9</option>
+                                        <option value="javascript">JavaScript (Node 20)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        )}
+                    </div>
 
                     <button className="text-gray-400 hover:text-white transition-colors">
                         <Maximize className="w-5 h-5" />

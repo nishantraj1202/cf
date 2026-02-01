@@ -10,6 +10,7 @@ const connectDB = require('./config/db');
 const Question = require('./models/Question');
 const Company = require('./models/Company');
 const CompanyImage = require('./models/CompanyImage');
+const Feedback = require('./models/Feedback');
 
 // --- Input Sanitization Helpers ---
 // Sanitize string: trim, escape HTML, limit length
@@ -187,6 +188,48 @@ app.use('/api/admin', adminLimiter);
 app.get('/health', async (req, res) => {
     res.json({ message: "Server is running" })
 })
+
+// Feedback Submission Endpoint
+app.post('/api/feedback', async (req, res) => {
+    try {
+        const { rating, pros, cons, suggestions } = req.body;
+
+        // Validate rating (required, 1-5)
+        const ratingNum = parseInt(rating);
+        if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+            return res.status(400).json({ error: "Rating must be between 1 and 5" });
+        }
+
+        // Sanitize text inputs
+        const sanitizedPros = typeof pros === 'string' ? pros.trim().substring(0, 2000) : '';
+        const sanitizedCons = typeof cons === 'string' ? cons.trim().substring(0, 2000) : '';
+        const sanitizedSuggestions = typeof suggestions === 'string' ? suggestions.trim().substring(0, 2000) : '';
+
+        // Get user metadata
+        const userAgent = req.headers['user-agent'] || '';
+        const ipAddress = req.ip || req.headers['x-forwarded-for'] || '';
+
+        // Create feedback entry
+        const feedback = await Feedback.create({
+            rating: ratingNum,
+            pros: sanitizedPros,
+            cons: sanitizedCons,
+            suggestions: sanitizedSuggestions,
+            userAgent: userAgent.substring(0, 500),
+            ipAddress: ipAddress.substring(0, 50)
+        });
+
+        console.log(`[Feedback] New feedback submitted: Rating ${ratingNum}/5`);
+        res.status(201).json({
+            success: true,
+            message: "Feedback submitted successfully",
+            id: feedback._id
+        });
+    } catch (err) {
+        console.error("Feedback submission error:", err);
+        res.status(500).json({ error: "Failed to submit feedback" });
+    }
+});
 
 // Single Image Upload to Cloudinary
 app.post('/api/upload/image', async (req, res) => {
@@ -535,10 +578,10 @@ app.get('/api/companies/:slug', async (req, res) => {
     }
 });
 
-// 3. Get All Companies (For Directories/Sitemap)
+// 3. Get All Companies (For Directories/Sitemap) - With Pagination
 app.get('/api/companies', async (req, res) => {
     try {
-        const { search } = req.query;
+        const { search, page = 1, limit = 12 } = req.query;
         let query = {};
 
         if (search && typeof search === 'string') {
@@ -547,8 +590,30 @@ app.get('/api/companies', async (req, res) => {
             query.name = { $regex: new RegExp(escapedSearch, 'i') };
         }
 
-        const companies = await Company.find(query).sort({ name: 1 });
-        res.json(companies);
+        // Parse pagination params
+        const pageNum = Math.max(1, parseInt(page) || 1);
+        const limitNum = Math.min(50, Math.max(1, parseInt(limit) || 10));
+        const skip = (pageNum - 1) * limitNum;
+
+        // Get total count for pagination
+        const total = await Company.countDocuments(query);
+        const totalPages = Math.ceil(total / limitNum);
+
+        // Fetch paginated companies
+        const companies = await Company.find(query)
+            .sort({ name: 1 })
+            .skip(skip)
+            .limit(limitNum);
+
+        res.json({
+            companies,
+            pagination: {
+                page: pageNum,
+                limit: limitNum,
+                total,
+                pages: totalPages
+            }
+        });
     } catch (err) {
         console.error("Error fetching companies:", err);
         res.status(500).json({ error: 'Server Error' });

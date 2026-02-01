@@ -69,7 +69,7 @@ export default function AboutPage() {
                                 <Linkedin className="w-5 h-5" />
                                 <span>LinkedIn</span>
                             </a>
-                            <a href="mailto:contact@codinzhub.com" className="flex items-center gap-2 text-gray-400 hover:text-red-400 transition-colors">
+                            <a href="mailto:support@codinzhub.com" className="flex items-center gap-2 text-gray-400 hover:text-red-400 transition-colors">
                                 <Mail className="w-5 h-5" />
                                 <span>Contact Me</span>
                             </a>

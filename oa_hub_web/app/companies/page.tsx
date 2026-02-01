@@ -22,9 +22,15 @@ interface Company {
 
 async function getCompanies(): Promise<Company[]> {
     try {
-        const res = await fetch(`${API_URL}/api/companies`, { cache: 'no-store' });
+        const res = await fetch(`${API_URL}/api/companies?page=1&limit=12`, { cache: 'no-store' });
         if (!res.ok) return [];
-        return res.json();
+        const data = await res.json();
+        // Handle new paginated response format
+        if (data.companies && Array.isArray(data.companies)) {
+            return data.companies;
+        }
+        // Fallback for old format
+        return Array.isArray(data) ? data : [];
     } catch (error) {
         console.error("Failed to fetch companies:", error);
         return [];
