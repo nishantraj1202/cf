@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Home, History, ThumbsUp, Mail } from "lucide-react";
+import { Home, History, ThumbsUp } from "lucide-react";
 import { Footer } from "./Footer";
 
 export function Sidebar() {
@@ -22,15 +22,7 @@ export function Sidebar() {
 
             <Footer />
 
-            <div className="mt-4 px-3 pt-3 border-t border-dark-700">
-                <a
-                    href="mailto:support@codinzhub.com"
-                    className="flex items-center gap-2 text-[11px] text-gray-400 hover:text-blue-400 transition-colors duration-200 group"
-                >
-                    <Mail className="w-3.5 h-3.5 group-hover:text-blue-400" />
-                    <span>support@codinzhub.com</span>
-                </a>
-            </div>
+
 
         </aside>
     );
