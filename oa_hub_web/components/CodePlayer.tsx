@@ -19,7 +19,7 @@ public:
     
     // TODO: Define your function here based on the problem
     // example: 
-    // int solve(vector<int>& nums) {
+    // int solve(vector<int> nums) {
     //     return 0;
     // }
 };`;

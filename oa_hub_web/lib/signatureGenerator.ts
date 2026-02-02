@@ -160,7 +160,7 @@ export function generateSignatures(testCases: TestCase[]): Signatures {
 
 function generateCppTemplate(params: { name: string, type: string }[], outputType: string): string {
     const cppReturn = toCppType(outputType);
-    const cppParams = params.map(p => `${toCppType(p.type)}& ${p.name}`).join(', ');
+    const cppParams = params.map(p => `${toCppType(p.type)} ${p.name}`).join(', ');
 
     return `class Solution {
 public:
