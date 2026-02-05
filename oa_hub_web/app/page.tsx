@@ -101,7 +101,7 @@ export default async function Home() {
       <div className="flex-1 flex overflow-hidden">
         <Sidebar />
         <div className="flex-1 relative flex flex-col min-w-0 overflow-hidden">
-          <IntroVideo videoSrc="/intro.mp4" maxDuration={5000} />
+          <IntroVideo />
           <main className="flex-1 overflow-y-auto custom-scroll p-4 sm:p-8 bg-dark-900">
             <div className="max-w-7xl mx-auto">
 
