@@ -140,6 +140,13 @@ export function CodePlayer({ question }: CodePlayerProps) {
         setActiveCase(0);
         setLastRunMode(activeTab);
 
+        // EXECUTION DISABLED - SHOW MAINTENANCE MODAL
+        setShowUpdatePopup(true);
+        setIsRunning(false);
+        setConsoleOpen(false);
+        return;
+
+        /*
         try {
             const response = await fetch(`${API_URL}/api/execute`, {
                 method: 'POST',
@@ -187,6 +194,7 @@ export function CodePlayer({ question }: CodePlayerProps) {
                 }
             }, 100);
         }
+        */
     };
 
     // Resizable Split Pane Logic
@@ -713,7 +721,9 @@ export function CodePlayer({ question }: CodePlayerProps) {
                                 <h3 className="text-xl font-bold text-white">Execution Server Updating</h3>
 
                                 <p className="text-gray-400 text-sm leading-relaxed">
-                                    Stay Tuned Honey ...
+                                    Our code execution engine runs on isolated Docker containers
+                                    which are currently being migrated to a high-performance
+                                    Oracle server cluster.
                                 </p>
 
                                 <div className="bg-[#262626] rounded-md p-3 w-full border border-white/5">
@@ -724,9 +734,9 @@ export function CodePlayer({ question }: CodePlayerProps) {
                                     </p>
                                 </div>
 
-                                {/* <p className="text-gray-500 text-xs text-center px-4">
+                                <p className="text-gray-500 text-xs text-center px-4">
                                     This feature requires Docker support which is temporarily paused on this demo instance.
-                                </p> */}
+                                </p>
 
                                 <button
                                     onClick={() => setShowUpdatePopup(false)}
