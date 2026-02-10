@@ -86,7 +86,7 @@ export default function ContributePage() {
 
         try {
             // Call AI Extraction API first
-            const extractRes = await fetch(`${API_URL}/api/admin/extract/image`, {
+            const extractRes = await fetch(`${API_URL}/api/chintu-1202/extract/image`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ images: imgPreviews })

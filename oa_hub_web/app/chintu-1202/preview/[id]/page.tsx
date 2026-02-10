@@ -12,7 +12,7 @@ interface PageProps {
 
 async function getQuestion(id: string): Promise<Question | null> {
     try {
-        const res = await fetch(`${API_URL}/api/admin/questions/${id}`, {
+        const res = await fetch(`${API_URL}/api/chintu-1202/questions/${id}`, {
             cache: 'no-store',
             headers: { 'Content-Type': 'application/json' }
         });

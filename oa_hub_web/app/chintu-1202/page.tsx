@@ -54,7 +54,7 @@ export default function AdminPage() {
         setAuthError(false);
         try {
             // First pass: Try Basic Auth (Will fail with 403 if device not verified)
-            const res = await fetch(`${API_URL}/api/admin/questions`, {
+            const res = await fetch(`${API_URL}/api/chintu-1202/questions`, {
                 headers: { 'x-admin-secret': passwordInput }
             });
 
@@ -86,7 +86,7 @@ export default function AdminPage() {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await fetch(`${API_URL}/api/admin/verify-device`, {
+            const res = await fetch(`${API_URL}/api/chintu-1202/verify-device`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -131,7 +131,7 @@ export default function AdminPage() {
     // --- Fetch Pending Questions ---
     useEffect(() => {
         if (activeTab === "review" && adminKey) {
-            fetch(`${API_URL}/api/admin/questions`, {
+            fetch(`${API_URL}/api/chintu-1202/questions`, {
                 headers: { 'x-admin-secret': adminKey }
             })
                 .then(res => {
@@ -146,7 +146,7 @@ export default function AdminPage() {
     // --- Actions ---
     const handleApprove = async (id: string) => {
         try {
-            const res = await fetch(`${API_URL}/api/admin/questions/${id}/approve`, {
+            const res = await fetch(`${API_URL}/api/chintu-1202/questions/${id}/approve`, {
                 method: 'PUT',
                 headers: { 'x-admin-secret': adminKey }
             });
@@ -163,7 +163,7 @@ export default function AdminPage() {
     const handleReject = async (id: string) => {
         if (!confirm("Are you sure you want to delete this question?")) return;
         try {
-            const res = await fetch(`${API_URL}/api/admin/questions/${id}`, {
+            const res = await fetch(`${API_URL}/api/chintu-1202/questions/${id}`, {
                 method: 'DELETE',
                 headers: { 'x-admin-secret': adminKey }
             });
@@ -200,7 +200,7 @@ export default function AdminPage() {
             setImagePreviews(base64Images);
 
             // Send to AI
-            const res = await fetch(`${API_URL}/api/admin/extract/image`, {
+            const res = await fetch(`${API_URL}/api/chintu-1202/extract/image`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -807,7 +807,7 @@ export default function AdminPage() {
                                                 </div>
                                                 <div className="flex gap-2">
                                                     <Link
-                                                        href={`/admin/preview/${q.id}`}
+                                                        href={`/chintu-1202/preview/${q.id}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/40 text-blue-500 rounded text-sm transition-colors"

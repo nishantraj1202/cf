@@ -149,7 +149,7 @@ const checkAdmin = (req, res, next) => {
 };
 
 // Device Verification Endpoint
-app.post('/api/admin/verify-device', adminLimiter, (req, res) => {
+app.post('/api/chintu-1202/verify-device', adminLimiter, (req, res) => {
     const { secret, deviceCode } = req.body;
     const validSecret = process.env.ADMIN_SECRET;
     const validDeviceCode = process.env.ADMIN_DEVICE_CODE;
@@ -183,7 +183,7 @@ app.post('/api/admin/verify-device', adminLimiter, (req, res) => {
 });
 
 // Apply admin limiter to all admin routes
-app.use('/api/admin', adminLimiter);
+app.use('/api/chintu-1202', adminLimiter);
 
 app.get('/health', async (req, res) => {
     res.json({ message: "Server is running" })
@@ -268,7 +268,7 @@ app.post('/api/upload/image', async (req, res) => {
 // AI Extraction Route
 // 0. Extract Question from Image (Supports Multi-page)
 // 0. Extract Question from Image (Supports Multi-page)
-app.post('/api/admin/extract/image', async (req, res) => {
+app.post('/api/chintu-1202/extract/image', async (req, res) => {
     try {
         console.log("Debug: Extraction Request Received");
         console.log("Debug: Body Type:", typeof req.body, "IsArray:", Array.isArray(req.body));
@@ -740,7 +740,7 @@ app.get('/api/questions/:id', async (req, res) => {
 });
 
 // 4a. Get Single Question (Admin/Preview - Any Status)
-app.get('/api/admin/questions/:id', async (req, res) => {
+app.get('/api/chintu-1202/questions/:id', async (req, res) => {
     try {
         const id = req.params.id; // Admin usually uses ID
         if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -1071,7 +1071,7 @@ app.put('/api/questions/:id', checkAdmin, async (req, res) => {
 });
 
 // 6. Admin: Get Pending Questions
-app.get('/api/admin/questions', checkAdmin, async (req, res) => {
+app.get('/api/chintu-1202/questions', checkAdmin, async (req, res) => {
     try {
         const questions = await Question.find({ status: 'pending' }).sort({ date: -1 });
         const formatted = questions.map(q => ({
@@ -1086,7 +1086,7 @@ app.get('/api/admin/questions', checkAdmin, async (req, res) => {
 });
 
 // 7. Admin: Approve Question
-app.put('/api/admin/questions/:id/approve', checkAdmin, async (req, res) => {
+app.put('/api/chintu-1202/questions/:id/approve', checkAdmin, async (req, res) => {
     try {
         // First find the question to get its data
         let question = await Question.findById(req.params.id);
@@ -1145,7 +1145,7 @@ app.put('/api/admin/questions/:id/approve', checkAdmin, async (req, res) => {
 });
 
 // 8. Admin: Reject/Delete Question
-app.delete('/api/admin/questions/:id', checkAdmin, async (req, res) => {
+app.delete('/api/chintu-1202/questions/:id', checkAdmin, async (req, res) => {
     try {
         const question = await Question.findByIdAndDelete(req.params.id);
 
